@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="72dp"
+    android:height="72dp"
+    android:viewportWidth="72"
+    android:viewportHeight="72">
+    <!-- Contenedor cuadrado redondeado de marca -->
+    <path
+        android:fillColor="#1E40AF"
+        android:pathData="M16,4 L56,4 A12,12 0 0,1 68,16 L68,56 A12,12 0 0,1 56,68 L16,68 A12,12 0 0,1 4,56 L4,16 A12,12 0 0,1 16,4 Z" />
+    <!-- Letra "A" estilizada corporativa -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,16 L50,52 L41.5,52 L37.8,42 L26.2,42 L22.5,52 L14,52 Z M32,27 L28.3,37 L35.7,37 Z" />
+    <!-- Detalle decorativo azul claro -->
+    <path
+        android:fillColor="#60A5FA"
+        android:pathData="M48,20 L56,20 L56,28 L48,28 Z" />
+</vector>

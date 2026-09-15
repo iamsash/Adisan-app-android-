@@ -1,0 +1,42 @@
+<resources>
+    <string name="app_name">ADISAN</string>
+    <string name="company_name">Distribuciones ADISAN</string>
+    <string name="slogan">Calidad que impulsa</string>
+    <string name="header_description">Gestiona tus productos, pedidos e inventario de manera sencilla.</string>
+
+    <!-- Login -->
+    <string name="login_title">Iniciar sesión</string>
+    <string name="login_subtitle">Ingresa tus credenciales para continuar.</string>
+    <string name="label_usuario">Usuario</string>
+    <string name="hint_usuario">Ingresa tu usuario</string>
+    <string name="label_password">Contraseña</string>
+    <string name="hint_password">Ingresa tu contraseña</string>
+    <string name="btn_login">Iniciar sesión</string>
+    <string name="secure_access">Acceso seguro</string>
+    <string name="copyright">© 2026 Distribuciones ADISAN</string>
+    <string name="error_empty_usuario">Por favor, ingresa tu usuario</string>
+    <string name="error_empty_password">Por favor, ingresa tu contraseña</string>
+    <string name="login_success_temp">Campos validados. ¡Listo para conectar con el backend!</string>
+
+    <!-- Dashboard -->
+    <string name="greeting_format">Hola, %1$s 👋</string>
+    <string name="dashboard_subgreeting">Todo bajo control hoy</string>
+    <string name="title_productos">Productos</string>
+    <string name="title_usuarios">Usuarios</string>
+    <string name="title_pedidos">Pedidos</string>
+    <string name="title_ventas">Ventas</string>
+    <string name="title_stock_bajo">Stock bajo</string>
+    <string name="title_en_camino">En camino</string>
+    <string name="title_ventas_producto">Ventas por producto</string>
+    <string name="title_actividad_reciente">Actividad reciente</string>
+    <string name="title_accesos_rapidos">Accesos rápidos</string>
+    <string name="title_ofertas">Ofertas</string>
+    <string name="title_stock">Stock</string>
+    <string name="title_mas">Más</string>
+
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_productos">Productos</string>
+    <string name="nav_pedidos">Pedidos</string>
+    <string name="nav_ventas">Ventas</string>
+    <string name="nav_mas">Más</string>
+</resources>
