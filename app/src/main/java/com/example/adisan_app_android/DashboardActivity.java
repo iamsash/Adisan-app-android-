@@ -80,6 +80,13 @@ public class DashboardActivity extends AppCompatActivity {
         setupListeners();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Recargar siempre los datos del Dashboard al retomar el foco
+        obtenerDatosDashboard();
+    }
+
     private void initViews() {
         tvGreeting = findViewById(R.id.tvGreeting);
         tvSubGreeting = findViewById(R.id.tvSubGreeting);
@@ -184,7 +191,7 @@ public class DashboardActivity extends AppCompatActivity {
             tvValPedidos.setText(String.format(Locale.getDefault(), "%,d", data.getPedidos()));
         }
         if (tvValVentas != null) {
-            tvValVentas.setText(String.format(Locale.US, "$%,.2f", data.getVentas()));
+            tvValVentas.setText(String.format(Locale.US, "S/ %,.2f", data.getVentas()));
         }
         if (tvValStockBajo != null) {
             tvValStockBajo.setText(String.format(Locale.getDefault(), "%,d", data.getStockBajo()));
@@ -193,7 +200,7 @@ public class DashboardActivity extends AppCompatActivity {
             tvValEnCamino.setText(String.format(Locale.getDefault(), "%,d", data.getEnCamino()));
         }
         if (tvTotalVendido != null) {
-            tvTotalVendido.setText(String.format(Locale.US, "$%,.2f", data.getTotalVendido()));
+            tvTotalVendido.setText(String.format(Locale.US, "S/ %,.2f", data.getTotalVendido()));
         }
 
         // Actualizar alertas
@@ -206,7 +213,11 @@ public class DashboardActivity extends AppCompatActivity {
         }
 
         if (tvAlertEnCaminoText != null) {
-            tvAlertEnCaminoText.setText(data.getEnCamino() + " pedidos actualmente en ruta de despacho");
+            if (data.getEnCamino() == 0) {
+                tvAlertEnCaminoText.setText("Sin pedidos actualmente en ruta de despacho");
+            } else {
+                tvAlertEnCaminoText.setText(data.getEnCamino() + " pedidos actualmente en ruta de despacho");
+            }
         }
     }
 
@@ -228,10 +239,6 @@ public class DashboardActivity extends AppCompatActivity {
                         Intent intent = new Intent(DashboardActivity.this, PedidosActivity.class);
                         startActivity(intent);
                         return true;
-                    } else if (itemId == R.id.nav_ventas) {
-                        Intent intent = new Intent(DashboardActivity.this, VentasActivity.class);
-                        startActivity(intent);
-                        return true;
                     } else if (itemId == R.id.nav_mas) {
                         Toast.makeText(DashboardActivity.this, "Próximamente", Toast.LENGTH_SHORT).show();
                         return true;
@@ -249,18 +256,17 @@ public class DashboardActivity extends AppCompatActivity {
                 if (id == R.id.cardQuickProductos || id == R.id.cardProductos) {
                     Intent intent = new Intent(DashboardActivity.this, ProductosActivity.class);
                     startActivity(intent);
-                } else if (id == R.id.cardQuickPedidos || id == R.id.cardPedidos) {
+                } else if (id == R.id.cardQuickPedidos || id == R.id.cardPedidos || id == R.id.cardQuickOfertas || id == R.id.cardVentas) {
                     Intent intent = new Intent(DashboardActivity.this, PedidosActivity.class);
-                    startActivity(intent);
-                } else if (id == R.id.cardQuickOfertas || id == R.id.cardVentas) {
-                    Intent intent = new Intent(DashboardActivity.this, VentasActivity.class);
                     startActivity(intent);
                 } else if (id == R.id.cardQuickStock || id == R.id.cardUsuarios) {
                     Toast.makeText(DashboardActivity.this, "Próximamente: Módulo Usuarios", Toast.LENGTH_SHORT).show();
                 } else if (id == R.id.cardStockBajo) {
-                    Toast.makeText(DashboardActivity.this, "Próximamente: Alertas de Stock", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(DashboardActivity.this, ProductosActivity.class);
+                    startActivity(intent);
                 } else if (id == R.id.cardEnCamino) {
-                    Toast.makeText(DashboardActivity.this, "Próximamente: Despachos en camino", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(DashboardActivity.this, PedidosActivity.class);
+                    startActivity(intent);
                 }
             }
         };

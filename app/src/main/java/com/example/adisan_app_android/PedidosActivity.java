@@ -1,5 +1,6 @@
 package com.example.adisan_app_android;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -7,9 +8,12 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,6 +36,7 @@ import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -62,7 +67,7 @@ public class PedidosActivity extends AppCompatActivity {
         // 1. Inicializar vistas
         initViews();
 
-        // 2. Manejar insets para que el header respete la barra de estado superior
+        // 2. Manejar insets para la barra de estado
         setupWindowInsets();
 
         // 3. Configurar RecyclerView y Adapter
@@ -71,8 +76,25 @@ public class PedidosActivity extends AppCompatActivity {
         // 4. Configurar listeners
         setupListeners();
 
-        // 5. Cargar pedidos desde el backend
+        // 5. Configurar títulos según el Rol del usuario
+        configurarTituloPorRol();
+
+        // 6. Cargar pedidos desde el backend
         cargarPedidos();
+    }
+
+    private void configurarTituloPorRol() {
+        SharedPreferences preferences = getSharedPreferences("AdisanPrefs", MODE_PRIVATE);
+        String rol = preferences.getString("rol", "admin");
+
+        TextView tvTitle = findViewById(R.id.tvHeaderTitle);
+        if (tvTitle != null) {
+            if ("cliente".equalsIgnoreCase(rol)) {
+                tvTitle.setText("Mis pedidos");
+            } else {
+                tvTitle.setText("Pedidos");
+            }
+        }
     }
 
     private void initViews() {
@@ -107,11 +129,11 @@ public class PedidosActivity extends AppCompatActivity {
         adapter = new PedidoAdapter(this, new ArrayList<>());
         rvPedidos.setAdapter(adapter);
 
-        // Listener para acciones de Editar y Cancelar
+        // Listener para acciones de Cambiar Estado y Cancelar
         adapter.setOnPedidoActionListener(new PedidoAdapter.OnPedidoActionListener() {
             @Override
             public void onEditarEstado(Pedido pedido) {
-                mostrarDialogoFormularioPedido(pedido);
+                mostrarDialogoCambiarEstado(pedido);
             }
 
             @Override
@@ -127,11 +149,11 @@ public class PedidosActivity extends AppCompatActivity {
         }
 
         if (btnNuevoPedidoHeader != null) {
-            btnNuevoPedidoHeader.setOnClickListener(v -> mostrarDialogoFormularioPedido(null));
+            btnNuevoPedidoHeader.setOnClickListener(v -> mostrarDialogoFormularioPedido());
         }
 
         if (btnCrearPrimerPedido != null) {
-            btnCrearPrimerPedido.setOnClickListener(v -> mostrarDialogoFormularioPedido(null));
+            btnCrearPrimerPedido.setOnClickListener(v -> mostrarDialogoFormularioPedido());
         }
 
         if (btnReintentar != null) {
@@ -158,11 +180,6 @@ public class PedidosActivity extends AppCompatActivity {
                         return true;
                     } else if (itemId == R.id.nav_productos) {
                         Intent intent = new Intent(PedidosActivity.this, ProductosActivity.class);
-                        startActivity(intent);
-                        finish();
-                        return true;
-                    } else if (itemId == R.id.nav_ventas) {
-                        Intent intent = new Intent(PedidosActivity.this, VentasActivity.class);
                         startActivity(intent);
                         finish();
                         return true;
@@ -246,12 +263,10 @@ public class PedidosActivity extends AppCompatActivity {
     }
 
     // =======================================================
-    // FORMULARIO CREAR Y EDITAR PEDIDO
+    // CREAR NUEVO PEDIDO CON SELECCIÓN DE CLIENTE Y PRODUCTOS
     // =======================================================
 
-    private void mostrarDialogoFormularioPedido(Pedido pedidoExistente) {
-        boolean esEdicion = pedidoExistente != null;
-
+    private void mostrarDialogoFormularioPedido() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_pedido, null);
         builder.setView(dialogView);
@@ -261,82 +276,344 @@ public class PedidosActivity extends AppCompatActivity {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
 
-        TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitlePedido);
-        TextView tvSubtitle = dialogView.findViewById(R.id.tvDialogSubtitlePedido);
+        Spinner spinnerClientes = dialogView.findViewById(R.id.spinnerClientesPedido);
+        MaterialButton btnRegistrarCliente = dialogView.findViewById(R.id.btnAbrirModalNuevoCliente);
 
-        TextInputLayout tilCliente = dialogView.findViewById(R.id.tilCliente);
-        TextInputLayout tilTotal = dialogView.findViewById(R.id.tilTotal);
-        TextInputLayout tilMetodoPago = dialogView.findViewById(R.id.tilMetodoPago);
-        TextInputLayout tilEstadoPedido = dialogView.findViewById(R.id.tilEstadoPedido);
-
-        TextInputEditText etClienteId = dialogView.findViewById(R.id.etClienteId);
-        TextInputEditText etTotalPedido = dialogView.findViewById(R.id.etTotalPedido);
+        TextInputLayout tilMetodoPago = dialogView.findViewById(R.id.tilMetodoPagoPedido);
         TextInputEditText etMetodoPago = dialogView.findViewById(R.id.etMetodoPago);
-        TextInputEditText etEstadoPedido = dialogView.findViewById(R.id.etEstadoPedido);
+
+        ProgressBar pbLoadingProd = dialogView.findViewById(R.id.pbLoadingProductosPedido);
+        RecyclerView rvSeleccion = dialogView.findViewById(R.id.rvSeleccionProductosPedido);
+        TextView tvTotalCalculado = dialogView.findViewById(R.id.tvTotalPedidoCalculado);
 
         MaterialButton btnCancelar = dialogView.findViewById(R.id.btnCancelarDialogPedido);
         MaterialButton btnGuardar = dialogView.findViewById(R.id.btnGuardarDialogPedido);
 
-        if (esEdicion) {
-            if (tvTitle != null) tvTitle.setText("Editar Pedido #" + pedidoExistente.getId());
-            if (tvSubtitle != null) tvSubtitle.setText("Modifica los datos o estado de la orden");
-
-            if (etClienteId != null) etClienteId.setText(String.valueOf(pedidoExistente.getClienteId()));
-            if (etTotalPedido != null) etTotalPedido.setText(pedidoExistente.getTotal());
-            if (etMetodoPago != null) etMetodoPago.setText(pedidoExistente.getMetodoPago());
-            if (etEstadoPedido != null) etEstadoPedido.setText(pedidoExistente.getEstado());
-        } else {
-            if (tvTitle != null) tvTitle.setText("Nuevo Pedido");
-            if (tvSubtitle != null) tvSubtitle.setText("Ingresa los datos para registrar un nuevo pedido");
+        if (rvSeleccion != null) {
+            rvSeleccion.setLayoutManager(new LinearLayoutManager(this));
         }
 
         if (btnCancelar != null) {
             btnCancelar.setOnClickListener(v -> dialog.dismiss());
         }
 
+        // Cargar clientes reales en el Spinner
+        cargarClientesEnSpinner(spinnerClientes);
+
+        // Botón Registrar Nuevo Cliente
+        if (btnRegistrarCliente != null) {
+            btnRegistrarCliente.setOnClickListener(v -> mostrarDialogoNuevoCliente(spinnerClientes));
+        }
+
+        // Cargar productos del catálogo
+        if (pbLoadingProd != null) pbLoadingProd.setVisibility(View.VISIBLE);
+
+        ApiClient.getApiService().getProductos().enqueue(new Callback<ProductoResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ProductoResponse> call, @NonNull Response<ProductoResponse> response) {
+                if (pbLoadingProd != null) pbLoadingProd.setVisibility(View.GONE);
+
+                List<Producto> productos = new ArrayList<>();
+                if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                    productos = response.body().getData();
+                }
+
+                if (productos.isEmpty()) {
+                    cargarProductosModalDirecto(rvSeleccion, tvTotalCalculado, btnGuardar, spinnerClientes, etMetodoPago, tilMetodoPago, dialog);
+                } else {
+                    configurarModalProductosPedido(productos, rvSeleccion, tvTotalCalculado, btnGuardar, spinnerClientes, etMetodoPago, tilMetodoPago, dialog);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ProductoResponse> call, @NonNull Throwable t) {
+                cargarProductosModalDirecto(rvSeleccion, tvTotalCalculado, btnGuardar, spinnerClientes, etMetodoPago, tilMetodoPago, dialog);
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void cargarClientesEnSpinner(Spinner spinnerClientes) {
+        ApiClient.getApiService().getUsuarios().enqueue(new Callback<UsuarioResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<UsuarioResponse> call, @NonNull Response<UsuarioResponse> response) {
+                List<Usuario> lista = new ArrayList<>();
+                if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                    lista = response.body().getData();
+                }
+
+                if (lista.isEmpty()) {
+                    cargarClientesModalDirecto(spinnerClientes);
+                } else {
+                    configurarSpinnerClientes(spinnerClientes, lista, null);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<UsuarioResponse> call, @NonNull Throwable t) {
+                cargarClientesModalDirecto(spinnerClientes);
+            }
+        });
+    }
+
+    private void cargarClientesModalDirecto(Spinner spinnerClientes) {
+        ApiClient.getApiService().getUsuariosDirectList().enqueue(new Callback<List<Usuario>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Usuario>> call, @NonNull Response<List<Usuario>> response) {
+                List<Usuario> lista = new ArrayList<>();
+                if (response.isSuccessful() && response.body() != null) {
+                    lista = response.body();
+                }
+                configurarSpinnerClientes(spinnerClientes, lista, null);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<Usuario>> call, @NonNull Throwable t) {
+                configurarSpinnerClientes(spinnerClientes, new ArrayList<>(), null);
+            }
+        });
+    }
+
+    private void configurarSpinnerClientes(Spinner spinnerClientes, List<Usuario> usuarios, Usuario usuarioASeleccionar) {
+        if (usuarios.isEmpty()) {
+            Usuario defaultUser = new Usuario();
+            defaultUser.setId(1);
+            defaultUser.setNombres("Cliente General");
+            defaultUser.setApellidos("");
+            usuarios.add(defaultUser);
+        }
+
+        ArrayAdapter<Usuario> adapterSpinner = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, usuarios);
+        adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        if (spinnerClientes != null) {
+            spinnerClientes.setAdapter(adapterSpinner);
+
+            if (usuarioASeleccionar != null) {
+                for (int i = 0; i < usuarios.size(); i++) {
+                    if (usuarios.get(i).getId() == usuarioASeleccionar.getId()) {
+                        spinnerClientes.setSelection(i);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // Modal para registrar nuevo cliente
+    private void mostrarDialogoNuevoCliente(Spinner spinnerClientes) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_nuevo_cliente, null);
+        builder.setView(dialogView);
+
+        AlertDialog dialogCliente = builder.create();
+        if (dialogCliente.getWindow() != null) {
+            dialogCliente.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        TextInputLayout tilNombres = dialogView.findViewById(R.id.tilNombresCliente);
+        TextInputLayout tilApellidos = dialogView.findViewById(R.id.tilApellidosCliente);
+        TextInputLayout tilDni = dialogView.findViewById(R.id.tilDniCliente);
+        TextInputLayout tilTelefono = dialogView.findViewById(R.id.tilTelefonoCliente);
+        TextInputLayout tilCorreo = dialogView.findViewById(R.id.tilCorreoCliente);
+        TextInputLayout tilDireccion = dialogView.findViewById(R.id.tilDireccionCliente);
+
+        TextInputEditText etNombres = dialogView.findViewById(R.id.etNombresCliente);
+        TextInputEditText etApellidos = dialogView.findViewById(R.id.etApellidosCliente);
+        TextInputEditText etDni = dialogView.findViewById(R.id.etDniCliente);
+        TextInputEditText etTelefono = dialogView.findViewById(R.id.etTelefonoCliente);
+        TextInputEditText etCorreo = dialogView.findViewById(R.id.etCorreoCliente);
+        TextInputEditText etDireccion = dialogView.findViewById(R.id.etDireccionCliente);
+
+        MaterialButton btnCancelar = dialogView.findViewById(R.id.btnCancelarNuevoCliente);
+        MaterialButton btnGuardar = dialogView.findViewById(R.id.btnGuardarNuevoCliente);
+
+        if (btnCancelar != null) {
+            btnCancelar.setOnClickListener(v -> dialogCliente.dismiss());
+        }
+
         if (btnGuardar != null) {
             btnGuardar.setOnClickListener(v -> {
-                if (tilCliente != null) tilCliente.setError(null);
-                if (tilTotal != null) tilTotal.setError(null);
-                if (tilMetodoPago != null) tilMetodoPago.setError(null);
-                if (tilEstadoPedido != null) tilEstadoPedido.setError(null);
+                if (tilNombres != null) tilNombres.setError(null);
+                if (tilApellidos != null) tilApellidos.setError(null);
+                if (tilDni != null) tilDni.setError(null);
+                if (tilTelefono != null) tilTelefono.setError(null);
+                if (tilCorreo != null) tilCorreo.setError(null);
 
-                String clienteIdStr = etClienteId != null && etClienteId.getText() != null ? etClienteId.getText().toString().trim() : "";
-                String totalStr = etTotalPedido != null && etTotalPedido.getText() != null ? etTotalPedido.getText().toString().trim() : "";
-                String metodoPago = etMetodoPago != null && etMetodoPago.getText() != null ? etMetodoPago.getText().toString().trim() : "Efectivo";
-                String estado = etEstadoPedido != null && etEstadoPedido.getText() != null ? etEstadoPedido.getText().toString().trim() : "pendiente";
+                String nombres = etNombres != null && etNombres.getText() != null ? etNombres.getText().toString().trim() : "";
+                String apellidos = etApellidos != null && etApellidos.getText() != null ? etApellidos.getText().toString().trim() : "";
+                String dni = etDni != null && etDni.getText() != null ? etDni.getText().toString().trim() : "";
+                String telefono = etTelefono != null && etTelefono.getText() != null ? etTelefono.getText().toString().trim() : "";
+                String correo = etCorreo != null && etCorreo.getText() != null ? etCorreo.getText().toString().trim() : "";
+                String direccion = etDireccion != null && etDireccion.getText() != null ? etDireccion.getText().toString().trim() : "";
 
                 boolean esValido = true;
 
-                if (TextUtils.isEmpty(clienteIdStr)) {
-                    if (tilCliente != null) tilCliente.setError("Ingresa el ID del cliente");
+                if (TextUtils.isEmpty(nombres)) {
+                    if (tilNombres != null) tilNombres.setError("Ingresa los nombres");
                     esValido = false;
                 }
 
-                if (TextUtils.isEmpty(totalStr)) {
-                    if (tilTotal != null) tilTotal.setError("Ingresa el monto total");
+                if (TextUtils.isEmpty(apellidos)) {
+                    if (tilApellidos != null) tilApellidos.setError("Ingresa los apellidos");
+                    esValido = false;
+                }
+
+                if (TextUtils.isEmpty(dni) || dni.length() != 8) {
+                    if (tilDni != null) tilDni.setError("El DNI debe tener 8 dígitos");
+                    esValido = false;
+                }
+
+                if (TextUtils.isEmpty(telefono) || telefono.length() < 7) {
+                    if (tilTelefono != null) tilTelefono.setError("Ingresa un teléfono válido");
+                    esValido = false;
+                }
+
+                if (TextUtils.isEmpty(correo) || !correo.contains("@")) {
+                    if (tilCorreo != null) tilCorreo.setError("Ingresa un correo electrónico válido");
                     esValido = false;
                 }
 
                 if (esValido) {
-                    int clienteId = Integer.parseInt(clienteIdStr);
+                    Usuario nuevoCliente = new Usuario();
+                    nuevoCliente.setNombres(nombres);
+                    nuevoCliente.setApellidos(apellidos);
+                    nuevoCliente.setDni(dni);
+                    nuevoCliente.setTelefono(telefono);
+                    nuevoCliente.setCorreo(correo);
+                    nuevoCliente.setDireccion(direccion);
+                    nuevoCliente.setUsuario(dni); // Usuario = DNI por defecto
+                    nuevoCliente.setPassword(dni); // Password = DNI por defecto
+                    nuevoCliente.setRol("cliente");
 
-                    Pedido pedidoRequest = esEdicion ? pedidoExistente : new Pedido();
-                    pedidoRequest.setClienteId(clienteId);
-                    pedidoRequest.setTotal(totalStr);
-                    pedidoRequest.setMetodoPago(metodoPago);
-                    pedidoRequest.setEstado(estado);
-
-                    if (esEdicion) {
-                        ejecutarEditarPedido(pedidoExistente.getId(), pedidoRequest, dialog, btnGuardar);
-                    } else {
-                        ejecutarCrearPedido(pedidoRequest, dialog, btnGuardar);
-                    }
+                    ejecutarCrearCliente(nuevoCliente, dialogCliente, btnGuardar, spinnerClientes);
                 }
             });
         }
 
-        dialog.show();
+        dialogCliente.show();
+    }
+
+    private void ejecutarCrearCliente(Usuario cliente, AlertDialog dialogCliente, MaterialButton btnGuardar, Spinner spinnerClientes) {
+        if (btnGuardar != null) btnGuardar.setEnabled(false);
+
+        ApiClient.getApiService().crearUsuario(cliente).enqueue(new Callback<UsuarioResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<UsuarioResponse> call, @NonNull Response<UsuarioResponse> response) {
+                if (btnGuardar != null) btnGuardar.setEnabled(true);
+
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    Toast.makeText(PedidosActivity.this, "¡Cliente registrado correctamente!", Toast.LENGTH_SHORT).show();
+                    if (dialogCliente != null && dialogCliente.isShowing()) dialogCliente.dismiss();
+
+                    // Recargar clientes en el Spinner y seleccionar el cliente recién creado
+                    cargarClientesEnSpinner(spinnerClientes);
+                } else {
+                    String msg = "Error al registrar cliente";
+                    if (response.body() != null && response.body().getMessage() != null) {
+                        msg = response.body().getMessage();
+                    } else if (response.errorBody() != null) {
+                        try {
+                            String errStr = response.errorBody().string();
+                            UsuarioResponse errRes = new Gson().fromJson(errStr, UsuarioResponse.class);
+                            if (errRes != null && errRes.getMessage() != null) {
+                                msg = errRes.getMessage();
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    }
+                    Toast.makeText(PedidosActivity.this, msg, Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<UsuarioResponse> call, @NonNull Throwable t) {
+                if (btnGuardar != null) btnGuardar.setEnabled(true);
+                Toast.makeText(PedidosActivity.this, "Error de conexión al registrar cliente", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void cargarProductosModalDirecto(RecyclerView rvSeleccion, TextView tvTotalCalculado, MaterialButton btnGuardar,
+                                            Spinner spinnerClientes, TextInputEditText etMetodoPago,
+                                            TextInputLayout tilMetodoPago, AlertDialog dialog) {
+        ApiClient.getApiService().getProductosDirectList().enqueue(new Callback<List<Producto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Producto>> call, @NonNull Response<List<Producto>> response) {
+                List<Producto> productos = new ArrayList<>();
+                if (response.isSuccessful() && response.body() != null) {
+                    productos = response.body();
+                }
+                configurarModalProductosPedido(productos, rvSeleccion, tvTotalCalculado, btnGuardar, spinnerClientes, etMetodoPago, tilMetodoPago, dialog);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<Producto>> call, @NonNull Throwable t) {
+                configurarModalProductosPedido(new ArrayList<>(), rvSeleccion, tvTotalCalculado, btnGuardar, spinnerClientes, etMetodoPago, tilMetodoPago, dialog);
+            }
+        });
+    }
+
+    private void configurarModalProductosPedido(List<Producto> productos, RecyclerView rvSeleccion, TextView tvTotalCalculado,
+                                                MaterialButton btnGuardar, Spinner spinnerClientes, TextInputEditText etMetodoPago,
+                                                TextInputLayout tilMetodoPago, AlertDialog dialog) {
+
+        int[] cantidades = new int[productos.size()];
+
+        SeleccionPedidoAdapter adapterSeleccion = new SeleccionPedidoAdapter(this, productos, cantidades, total -> {
+            if (tvTotalCalculado != null) {
+                tvTotalCalculado.setText(String.format(Locale.US, "S/ %.2f", total));
+            }
+        });
+
+        if (rvSeleccion != null) {
+            rvSeleccion.setAdapter(adapterSeleccion);
+        }
+
+        if (btnGuardar != null) {
+            btnGuardar.setOnClickListener(v -> {
+                if (tilMetodoPago != null) tilMetodoPago.setError(null);
+
+                String metodoPago = etMetodoPago != null && etMetodoPago.getText() != null ? etMetodoPago.getText().toString().trim() : "Yape";
+
+                int clienteId = 1;
+                if (spinnerClientes != null && spinnerClientes.getSelectedItem() instanceof Usuario) {
+                    Usuario userSel = (Usuario) spinnerClientes.getSelectedItem();
+                    clienteId = userSel.getId();
+                }
+
+                double totalCalculado = adapterSeleccion.obtenerTotalCalculado();
+                if (totalCalculado <= 0) {
+                    Toast.makeText(PedidosActivity.this, "Selecciona al menos 1 producto para crear el pedido", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Construir Pedido con cliente_id real y estado inicial 'pendiente'
+                Pedido pedidoRequest = new Pedido();
+                pedidoRequest.setClienteId(clienteId);
+                pedidoRequest.setTotal(String.format(Locale.US, "%.2f", totalCalculado));
+                pedidoRequest.setMetodoPago(metodoPago);
+                pedidoRequest.setEstado("pendiente");
+
+                List<DetallePedido> carritoList = new ArrayList<>();
+                for (int i = 0; i < productos.size(); i++) {
+                    int cant = cantidades[i];
+                    if (cant > 0) {
+                        Producto prod = productos.get(i);
+                        DetallePedido item = new DetallePedido();
+                        item.setProductoId(prod.getProductoId());
+                        item.setPresentacionId(prod.getPresentacionId());
+                        item.setCantidad(cant);
+                        item.setPrecio(prod.getPrecioVenta());
+                        item.setSubtotal(String.format(Locale.US, "%.2f", cant * prod.getPrecioVentaDouble()));
+                        carritoList.add(item);
+                    }
+                }
+                pedidoRequest.setDetalles(carritoList);
+
+                ejecutarCrearPedido(pedidoRequest, dialog, btnGuardar);
+            });
+        }
     }
 
     private void ejecutarCrearPedido(Pedido pedido, AlertDialog dialog, MaterialButton btnGuardar) {
@@ -353,13 +630,15 @@ public class PedidosActivity extends AppCompatActivity {
                     return;
                 }
 
-                if (response.isSuccessful()) {
-                    Toast.makeText(PedidosActivity.this, "¡Pedido registrado correctamente!", Toast.LENGTH_SHORT).show();
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    Toast.makeText(PedidosActivity.this, "¡Pedido registrado con estado PENDIENTE!", Toast.LENGTH_SHORT).show();
                     if (dialog != null && dialog.isShowing()) dialog.dismiss();
                     cargarPedidos();
                 } else {
                     String msg = "Error al crear pedido (" + response.code() + ")";
-                    if (response.errorBody() != null) {
+                    if (response.body() != null && response.body().getMessage() != null) {
+                        msg = response.body().getMessage();
+                    } else if (response.errorBody() != null) {
                         try {
                             String errStr = response.errorBody().string();
                             PedidoResponse errRes = new Gson().fromJson(errStr, PedidoResponse.class);
@@ -376,49 +655,63 @@ public class PedidosActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<PedidoResponse> call, @NonNull Throwable t) {
                 if (btnGuardar != null) btnGuardar.setEnabled(true);
-                Toast.makeText(PedidosActivity.this, "Error de conexión al crear pedido", Toast.LENGTH_LONG).show();
+                Toast.makeText(PedidosActivity.this, "Error de conexión al registrar pedido", Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    private void ejecutarEditarPedido(int id, Pedido pedido, AlertDialog dialog, MaterialButton btnGuardar) {
-        if (btnGuardar != null) btnGuardar.setEnabled(false);
+    // =======================================================
+    // CAMBIAR ESTADO DE PEDIDO
+    // =======================================================
 
-        ApiClient.getApiService().editarPedido(id, pedido).enqueue(new Callback<PedidoResponse>() {
+    private void mostrarDialogoCambiarEstado(Pedido pedido) {
+        String[] estados = {"pendiente", "aceptado", "en_camino", "entregado", "cancelado"};
+        int seleccionActual = 0;
+        for (int i = 0; i < estados.length; i++) {
+            if (estados[i].equalsIgnoreCase(pedido.getEstado())) {
+                seleccionActual = i;
+                break;
+            }
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Cambiar Estado del Pedido #" + pedido.getId())
+                .setSingleChoiceItems(estados, seleccionActual, (dialog, which) -> {
+                    String nuevoEstado = estados[which];
+                    dialog.dismiss();
+                    ejecutarActualizarEstado(pedido.getId(), nuevoEstado);
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void ejecutarActualizarEstado(int pedidoId, String nuevoEstado) {
+        mostrarEstadoCarga();
+
+        Pedido updateRequest = new Pedido();
+        updateRequest.setEstado(nuevoEstado);
+
+        ApiClient.getApiService().editarPedido(pedidoId, updateRequest).enqueue(new Callback<PedidoResponse>() {
             @Override
             public void onResponse(@NonNull Call<PedidoResponse> call, @NonNull Response<PedidoResponse> response) {
-                if (btnGuardar != null) btnGuardar.setEnabled(true);
-
                 if (response.code() == 401) {
-                    if (dialog != null && dialog.isShowing()) dialog.dismiss();
                     manejarSesionExpirada();
                     return;
                 }
 
                 if (response.isSuccessful()) {
-                    Toast.makeText(PedidosActivity.this, "¡Pedido actualizado correctamente!", Toast.LENGTH_SHORT).show();
-                    if (dialog != null && dialog.isShowing()) dialog.dismiss();
+                    Toast.makeText(PedidosActivity.this, "¡Estado actualizado a " + nuevoEstado.toUpperCase() + "!", Toast.LENGTH_SHORT).show();
                     cargarPedidos();
                 } else {
-                    String msg = "Error al actualizar pedido (" + response.code() + ")";
-                    if (response.errorBody() != null) {
-                        try {
-                            String errStr = response.errorBody().string();
-                            PedidoResponse errRes = new Gson().fromJson(errStr, PedidoResponse.class);
-                            if (errRes != null && errRes.getMessage() != null) {
-                                msg = errRes.getMessage();
-                            }
-                        } catch (Exception ignored) {
-                        }
-                    }
-                    Toast.makeText(PedidosActivity.this, msg, Toast.LENGTH_LONG).show();
+                    Toast.makeText(PedidosActivity.this, "Error al actualizar estado (" + response.code() + ")", Toast.LENGTH_SHORT).show();
+                    cargarPedidos();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<PedidoResponse> call, @NonNull Throwable t) {
-                if (btnGuardar != null) btnGuardar.setEnabled(true);
-                Toast.makeText(PedidosActivity.this, "Error de conexión al actualizar pedido", Toast.LENGTH_LONG).show();
+                Toast.makeText(PedidosActivity.this, "Error de conexión al actualizar estado", Toast.LENGTH_SHORT).show();
+                cargarPedidos();
             }
         });
     }
@@ -430,38 +723,10 @@ public class PedidosActivity extends AppCompatActivity {
     private void mostrarDialogoConfirmarCancelar(Pedido pedido) {
         new AlertDialog.Builder(this)
                 .setTitle("Cancelar Pedido")
-                .setMessage("¿Estás seguro de cancelar o eliminar el pedido #" + pedido.getId() + "?")
-                .setPositiveButton("Confirmar", (dialog, which) -> ejecutarEliminarPedido(pedido.getId()))
+                .setMessage("¿Estás seguro de cambiar a CANCELADO el pedido #" + pedido.getId() + "?")
+                .setPositiveButton("Confirmar", (dialog, which) -> ejecutarActualizarEstado(pedido.getId(), "cancelado"))
                 .setNegativeButton("Volver", null)
                 .show();
-    }
-
-    private void ejecutarEliminarPedido(int id) {
-        mostrarEstadoCarga();
-
-        ApiClient.getApiService().eliminarPedido(id).enqueue(new Callback<PedidoResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<PedidoResponse> call, @NonNull Response<PedidoResponse> response) {
-                if (response.code() == 401) {
-                    manejarSesionExpirada();
-                    return;
-                }
-
-                if (response.isSuccessful()) {
-                    Toast.makeText(PedidosActivity.this, "¡Pedido procesado/cancelado correctamente!", Toast.LENGTH_SHORT).show();
-                    cargarPedidos();
-                } else {
-                    Toast.makeText(PedidosActivity.this, "Error al procesar pedido (" + response.code() + ")", Toast.LENGTH_SHORT).show();
-                    cargarPedidos();
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<PedidoResponse> call, @NonNull Throwable t) {
-                Toast.makeText(PedidosActivity.this, "Error de conexión al procesar pedido", Toast.LENGTH_SHORT).show();
-                cargarPedidos();
-            }
-        });
     }
 
     // =======================================================
@@ -520,5 +785,105 @@ public class PedidosActivity extends AppCompatActivity {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    // =======================================================
+    // ADAPTER INTERNO PARA SELECCIONAR PRODUCTOS DEL PEDIDO
+    // =======================================================
+
+    private static class SeleccionPedidoAdapter extends RecyclerView.Adapter<SeleccionPedidoAdapter.SeleccionViewHolder> {
+
+        interface OnTotalChangeListener {
+            void onTotalChange(double total);
+        }
+
+        private final Context context;
+        private final List<Producto> productoList;
+        private final int[] cantidades;
+        private final OnTotalChangeListener totalChangeListener;
+
+        public SeleccionPedidoAdapter(Context context, List<Producto> productoList, int[] cantidades, OnTotalChangeListener listener) {
+            this.context = context;
+            this.productoList = productoList != null ? productoList : new ArrayList<>();
+            this.cantidades = cantidades;
+            this.totalChangeListener = listener;
+        }
+
+        public double obtenerTotalCalculado() {
+            double total = 0;
+            for (int i = 0; i < productoList.size(); i++) {
+                int cant = cantidades[i];
+                if (cant > 0) {
+                    total += cant * productoList.get(i).getPrecioVentaDouble();
+                }
+            }
+            return total;
+        }
+
+        @NonNull
+        @Override
+        public SeleccionViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(context).inflate(R.layout.item_producto_seleccion, parent, false);
+            return new SeleccionViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull SeleccionViewHolder holder, int position) {
+            Producto producto = productoList.get(position);
+            int cant = cantidades[position];
+
+            holder.tvNombre.setText(producto.getProductoNombre());
+            holder.tvInfo.setText(String.format(Locale.US, "S/ %.2f • Stock: %d", producto.getPrecioVentaDouble(), producto.getStock()));
+            holder.tvCantidad.setText(String.valueOf(cant));
+
+            double subtotal = cant * producto.getPrecioVentaDouble();
+            holder.tvSubtotal.setText(String.format(Locale.US, "Subtotal: S/ %.2f", subtotal));
+
+            holder.btnMas.setOnClickListener(v -> {
+                if (cantidades[position] < producto.getStock()) {
+                    cantidades[position]++;
+                    notifyItemChanged(position);
+                    if (totalChangeListener != null) {
+                        totalChangeListener.onTotalChange(obtenerTotalCalculado());
+                    }
+                } else {
+                    Toast.makeText(context, "Stock máximo alcanzado (" + producto.getStock() + ")", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            holder.btnMenos.setOnClickListener(v -> {
+                if (cantidades[position] > 0) {
+                    cantidades[position]--;
+                    notifyItemChanged(position);
+                    if (totalChangeListener != null) {
+                        totalChangeListener.onTotalChange(obtenerTotalCalculado());
+                    }
+                }
+            });
+        }
+
+        @Override
+        public int getItemCount() {
+            return productoList != null ? productoList.size() : 0;
+        }
+
+        static class SeleccionViewHolder extends RecyclerView.ViewHolder {
+            TextView tvNombre;
+            TextView tvInfo;
+            TextView tvSubtotal;
+            TextView tvCantidad;
+            MaterialButton btnMenos;
+            MaterialButton btnMas;
+
+            public SeleccionViewHolder(@NonNull View itemView) {
+                super(itemView);
+                tvNombre = itemView.findViewById(R.id.tvNombreItemVenta);
+                tvInfo = itemView.findViewById(R.id.tvInfoItemVenta);
+                tvSubtotal = itemView.findViewById(R.id.tvSubtotalItemVenta);
+                tvCantidad = itemView.findViewById(R.id.tvCantidadItem);
+                btnMenos = itemView.findViewById(R.id.btnMenosCantidad);
+                btnMas = itemView.findViewById(R.id.btnMasCantidad);
+            }
+        }
     }
 }

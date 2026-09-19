@@ -21,7 +21,7 @@ public class Pedido {
     private String metodoPago;
 
     @SerializedName(value = "estado")
-    private String estado; // 'pendiente', 'aceptado', 'en_camino', 'entregado'
+    private String estado; // 'pendiente', 'aceptado', 'en_camino', 'entregado', 'cancelado'
 
     @SerializedName(value = "fecha_estimada_entrega", alternate = {"fechaEstimadaEntrega"})
     private String fechaEstimadaEntrega;
@@ -29,7 +29,7 @@ public class Pedido {
     @SerializedName(value = "fecha", alternate = {"created_at", "fecha_creacion"})
     private String fecha;
 
-    @SerializedName(value = "detalles", alternate = {"items", "detalle_pedido", "detalle"})
+    @SerializedName(value = "carrito", alternate = {"detalles", "items", "detalle_pedido", "detalle"})
     private List<DetallePedido> detalles;
 
     public int getId() {

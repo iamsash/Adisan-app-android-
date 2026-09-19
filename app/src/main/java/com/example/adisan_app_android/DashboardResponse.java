@@ -1,16 +1,52 @@
 package com.example.adisan_app_android;
 
+import com.google.gson.annotations.SerializedName;
+import java.util.List;
+
 public class DashboardResponse {
 
-    private boolean success;
-    private int productos;
-    private int usuarios;
-    private int pedidos;
-    private double ventas;
-    private int stockBajo;
-    private int enCamino;
-    private double totalVendido;
+    @SerializedName(value = "success")
+    private boolean success = true;
+
+    @SerializedName(value = "totalProductos", alternate = {"productos"})
+    private int totalProductos;
+
+    @SerializedName(value = "totalUsuarios", alternate = {"usuarios"})
+    private int totalUsuarios;
+
+    @SerializedName(value = "totalPedidos", alternate = {"pedidos"})
+    private int totalPedidos;
+
+    @SerializedName(value = "totalVentas", alternate = {"ventas", "totalVendido"})
+    private Object totalVentas;
+
+    @SerializedName(value = "utilidad")
+    private Object utilidad;
+
+    @SerializedName(value = "stockBajo")
+    private List<Object> stockBajoList;
+
+    @SerializedName(value = "pedidosPorEstado")
+    private List<EstadoCount> pedidosPorEstado;
+
+    @SerializedName("message")
     private String message;
+
+    public static class EstadoCount {
+        @SerializedName("estado")
+        private String estado;
+
+        @SerializedName("cantidad")
+        private int cantidad;
+
+        public String getEstado() {
+            return estado != null ? estado : "";
+        }
+
+        public int getCantidad() {
+            return cantidad;
+        }
+    }
 
     public boolean isSuccess() {
         return success;
@@ -21,59 +57,66 @@ public class DashboardResponse {
     }
 
     public int getProductos() {
-        return productos;
+        return totalProductos;
     }
 
     public void setProductos(int productos) {
-        this.productos = productos;
+        this.totalProductos = productos;
     }
 
     public int getUsuarios() {
-        return usuarios;
+        return totalUsuarios;
     }
 
     public void setUsuarios(int usuarios) {
-        this.usuarios = usuarios;
+        this.totalUsuarios = usuarios;
     }
 
     public int getPedidos() {
-        return pedidos;
+        return totalPedidos;
     }
 
     public void setPedidos(int pedidos) {
-        this.pedidos = pedidos;
+        this.totalPedidos = pedidos;
     }
 
     public double getVentas() {
-        return ventas;
+        if (totalVentas != null) {
+            try {
+                return Double.parseDouble(totalVentas.toString());
+            } catch (Exception e) {
+                return 0.0;
+            }
+        }
+        return 0.0;
     }
 
     public void setVentas(double ventas) {
-        this.ventas = ventas;
+        this.totalVentas = ventas;
     }
 
     public int getStockBajo() {
-        return stockBajo;
-    }
-
-    public void setStockBajo(int stockBajo) {
-        this.stockBajo = stockBajo;
+        return stockBajoList != null ? stockBajoList.size() : 0;
     }
 
     public int getEnCamino() {
-        return enCamino;
-    }
-
-    public void setEnCamino(int enCamino) {
-        this.enCamino = enCamino;
+        int count = 0;
+        if (pedidosPorEstado != null) {
+            for (EstadoCount ec : pedidosPorEstado) {
+                if ("en_camino".equalsIgnoreCase(ec.getEstado()) || "en camino".equalsIgnoreCase(ec.getEstado())) {
+                    count += ec.getCantidad();
+                }
+            }
+        }
+        return count;
     }
 
     public double getTotalVendido() {
-        return totalVendido;
+        return getVentas();
     }
 
     public void setTotalVendido(double totalVendido) {
-        this.totalVendido = totalVendido;
+        this.totalVentas = totalVendido;
     }
 
     public String getMessage() {

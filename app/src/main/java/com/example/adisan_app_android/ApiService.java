@@ -10,6 +10,7 @@ import retrofit2.http.Header;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface ApiService {
 
@@ -18,6 +19,22 @@ public interface ApiService {
 
     @GET("api/dashboard")
     Call<DashboardResponse> getDashboardData(@Header("Authorization") String token);
+
+    // ==========================================
+    // CLIENTES / USUARIOS
+    // ==========================================
+
+    @GET("api/usuarios")
+    Call<UsuarioResponse> getUsuarios();
+
+    @GET("api/usuarios")
+    Call<UsuarioResponse> buscarUsuarios(@Query("search") String search);
+
+    @GET("api/usuarios")
+    Call<List<Usuario>> getUsuariosDirectList();
+
+    @POST("api/usuarios")
+    Call<UsuarioResponse> crearUsuario(@Body Usuario usuario);
 
     // ==========================================
     // CRUD PRODUCTOS

@@ -3,12 +3,14 @@ package com.example.adisan_app_android;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
-public class VentaResponse {
+public class UsuarioResponse {
 
-    private boolean success;
+    private boolean success = true;
 
-    @SerializedName(value = "data", alternate = {"ventas", "items", "results"})
-    private List<Venta> data;
+    @SerializedName(value = "data", alternate = {"usuarios", "items", "results"})
+    private List<Usuario> data;
+
+    private int total;
 
     private String message;
 
@@ -20,12 +22,20 @@ public class VentaResponse {
         this.success = success;
     }
 
-    public List<Venta> getData() {
+    public List<Usuario> getData() {
         return data;
     }
 
-    public void setData(List<Venta> data) {
+    public void setData(List<Usuario> data) {
         this.data = data;
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
+    public void setTotal(int total) {
+        this.total = total;
     }
 
     public String getMessage() {

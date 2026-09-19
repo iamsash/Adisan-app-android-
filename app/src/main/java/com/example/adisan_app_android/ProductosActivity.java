@@ -47,6 +47,7 @@ public class ProductosActivity extends AppCompatActivity {
     private MaterialButton btnReintentar;
     private MaterialButton btnCrearPrimerProducto;
     private MaterialButton btnNuevoProductoHeader;
+    private MaterialButton btnVerCarrito;
 
     private SwipeRefreshLayout swipeRefresh;
     private RecyclerView rvProductos;
@@ -72,7 +73,10 @@ public class ProductosActivity extends AppCompatActivity {
         // 4. Configurar listeners
         setupListeners();
 
-        // 5. Cargar productos desde el backend
+        // 5. Configurar títulos según el Rol del usuario
+        configurarTituloPorRol();
+
+        // 6. Cargar productos desde el backend
         cargarProductos();
     }
 
@@ -83,6 +87,20 @@ public class ProductosActivity extends AppCompatActivity {
         cargarProductos();
     }
 
+    private void configurarTituloPorRol() {
+        SharedPreferences preferences = getSharedPreferences("AdisanPrefs", MODE_PRIVATE);
+        String rol = preferences.getString("rol", "admin");
+
+        TextView tvTitle = findViewById(R.id.tvHeaderTitle);
+        if (tvTitle != null) {
+            if ("cliente".equalsIgnoreCase(rol)) {
+                tvTitle.setText("Comprar productos");
+            } else {
+                tvTitle.setText("Vender productos");
+            }
+        }
+    }
+
     private void initViews() {
         pbLoading = findViewById(R.id.pbLoading);
         layoutVacio = findViewById(R.id.layoutVacio);
@@ -91,6 +109,7 @@ public class ProductosActivity extends AppCompatActivity {
         btnReintentar = findViewById(R.id.btnReintentar);
         btnCrearPrimerProducto = findViewById(R.id.btnCrearPrimerProducto);
         btnNuevoProductoHeader = findViewById(R.id.btnNuevoProductoHeader);
+        btnVerCarrito = findViewById(R.id.btnVerCarrito);
 
         swipeRefresh = findViewById(R.id.swipeRefresh);
         rvProductos = findViewById(R.id.rvProductos);
@@ -115,7 +134,7 @@ public class ProductosActivity extends AppCompatActivity {
         adapter = new ProductoAdapter(this, new ArrayList<>());
         rvProductos.setAdapter(adapter);
 
-        // Listener para acciones de Editar y Eliminar
+        // Listener para acciones de Carrito, Editar y Eliminar
         adapter.setOnProductoActionListener(new ProductoAdapter.OnProductoActionListener() {
             @Override
             public void onEditar(Producto producto) {
@@ -125,6 +144,16 @@ public class ProductosActivity extends AppCompatActivity {
             @Override
             public void onEliminar(Producto producto) {
                 mostrarDialogoConfirmarEliminar(producto);
+            }
+
+            @Override
+            public void onAgregarCarrito(Producto producto) {
+                if (producto.getStock() <= 0) {
+                    Toast.makeText(ProductosActivity.this, "Producto sin stock disponible", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                CarritoManager.getInstance().agregarProducto(producto, 1);
+                Toast.makeText(ProductosActivity.this, "¡" + producto.getProductoNombre() + " agregado al carrito!", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -136,6 +165,13 @@ public class ProductosActivity extends AppCompatActivity {
 
         if (btnNuevoProductoHeader != null) {
             btnNuevoProductoHeader.setOnClickListener(v -> mostrarDialogoFormularioProducto(null));
+        }
+
+        if (btnVerCarrito != null) {
+            btnVerCarrito.setOnClickListener(v -> {
+                Intent intent = new Intent(ProductosActivity.this, CarritoActivity.class);
+                startActivity(intent);
+            });
         }
 
         if (btnCrearPrimerProducto != null) {
@@ -166,11 +202,6 @@ public class ProductosActivity extends AppCompatActivity {
                         return true;
                     } else if (itemId == R.id.nav_pedidos) {
                         Intent intent = new Intent(ProductosActivity.this, PedidosActivity.class);
-                        startActivity(intent);
-                        finish();
-                        return true;
-                    } else if (itemId == R.id.nav_ventas) {
-                        Intent intent = new Intent(ProductosActivity.this, VentasActivity.class);
                         startActivity(intent);
                         finish();
                         return true;

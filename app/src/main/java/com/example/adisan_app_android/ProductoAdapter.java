@@ -21,6 +21,7 @@ public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.Produc
     public interface OnProductoActionListener {
         void onEditar(Producto producto);
         void onEliminar(Producto producto);
+        void onAgregarCarrito(Producto producto);
     }
 
     private final Context context;
@@ -74,20 +75,32 @@ public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.Produc
             holder.tvStock.setTextColor(Color.parseColor("#1E293B"));
         }
 
-        holder.tvPrecioCompra.setText(String.format(Locale.US, "$%.2f", producto.getPrecioCompraDouble()));
-        holder.tvPrecioVenta.setText(String.format(Locale.US, "$%.2f", producto.getPrecioVentaDouble()));
+        holder.tvPrecioCompra.setText(String.format(Locale.US, "S/ %.2f", producto.getPrecioCompraDouble()));
+        holder.tvPrecioVenta.setText(String.format(Locale.US, "S/ %.2f", producto.getPrecioVentaDouble()));
 
-        holder.btnEditar.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onEditar(producto);
-            }
-        });
+        if (holder.btnAgregarCarrito != null) {
+            holder.btnAgregarCarrito.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onAgregarCarrito(producto);
+                }
+            });
+        }
 
-        holder.btnEliminar.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onEliminar(producto);
-            }
-        });
+        if (holder.btnEditar != null) {
+            holder.btnEditar.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onEditar(producto);
+                }
+            });
+        }
+
+        if (holder.btnEliminar != null) {
+            holder.btnEliminar.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onEliminar(producto);
+                }
+            });
+        }
     }
 
     @Override
@@ -102,6 +115,7 @@ public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.Produc
         TextView tvStock;
         TextView tvPrecioCompra;
         TextView tvPrecioVenta;
+        MaterialButton btnAgregarCarrito;
         MaterialButton btnEditar;
         MaterialButton btnEliminar;
 
@@ -113,6 +127,7 @@ public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.Produc
             tvStock = itemView.findViewById(R.id.tvStockProducto);
             tvPrecioCompra = itemView.findViewById(R.id.tvPrecioCompra);
             tvPrecioVenta = itemView.findViewById(R.id.tvPrecioVenta);
+            btnAgregarCarrito = itemView.findViewById(R.id.btnAgregarCarrito);
             btnEditar = itemView.findViewById(R.id.btnEditarProducto);
             btnEliminar = itemView.findViewById(R.id.btnEliminarProducto);
         }

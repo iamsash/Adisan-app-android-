@@ -12,13 +12,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="20dp">
 
         <TextView
             android:id="@+id/tvDialogTitlePedido"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Nuevo Pedido"
+            android:text="Registrar Nuevo Pedido"
             android:textColor="@color/text_primary"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -28,65 +28,61 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="Ingresa los datos para registrar el pedido"
+            android:text="Selecciona cliente, productos e indica método de pago"
             android:textColor="@color/text_secondary"
             android:textSize="13sp" />
 
-        <!-- Campo Cliente ID / Nombre -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilCliente"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        <!-- Seccion Cliente Selector y Registrar Cliente -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:boxCornerRadiusBottomEnd="10dp"
-            app:boxCornerRadiusBottomStart="10dp"
-            app:boxCornerRadiusTopEnd="10dp"
-            app:boxCornerRadiusTopStart="10dp"
-            app:boxStrokeColor="@color/input_stroke_color">
+            android:layout_marginTop="14dp"
+            android:orientation="vertical">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etClienteId"
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="ID de Cliente (ej: 1)"
-                android:inputType="number"
-                android:maxLines="1"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginBottom="4dp">
 
-        <!-- Campo Total / Monto -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilTotal"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:boxCornerRadiusBottomEnd="10dp"
-            app:boxCornerRadiusBottomStart="10dp"
-            app:boxCornerRadiusTopEnd="10dp"
-            app:boxCornerRadiusTopStart="10dp"
-            app:boxStrokeColor="@color/input_stroke_color">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="Cliente"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etTotalPedido"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAbrirModalNuevoCliente"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:paddingHorizontal="0dp"
+                    android:paddingVertical="0dp"
+                    android:text="+ Registrar cliente"
+                    android:textColor="@color/blue_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </RelativeLayout>
+
+            <Spinner
+                android:id="@+id/spinnerClientesPedido"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Monto Total (ej: 125.00)"
-                android:inputType="numberDecimal"
-                android:maxLines="1"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_height="48dp"
+                android:background="@drawable/bg_spinner_outlined"
+                android:paddingHorizontal="12dp" />
 
-        <!-- Campo Método de Pago -->
+        </LinearLayout>
+
+        <!-- Método de Pago -->
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilMetodoPago"
+            android:id="@+id/tilMetodoPagoPedido"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             app:boxCornerRadiusBottomEnd="10dp"
             app:boxCornerRadiusBottomStart="10dp"
             app:boxCornerRadiusTopEnd="10dp"
@@ -97,64 +93,105 @@
                 android:id="@+id/etMetodoPago"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Método de pago (Yape / Tarjeta / Efectivo)"
+                android:hint="Pago (Yape/Tarjeta/Efectivo)"
                 android:inputType="text"
                 android:maxLines="1"
+                android:text="Yape"
                 android:textColor="@color/text_primary"
-                android:textSize="14sp" />
+                android:textSize="13sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Campo Estado del Pedido -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilEstadoPedido"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
+        <!-- Etiqueta Catálogo -->
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:boxCornerRadiusBottomEnd="10dp"
-            app:boxCornerRadiusBottomStart="10dp"
-            app:boxCornerRadiusTopEnd="10dp"
-            app:boxCornerRadiusTopStart="10dp"
-            app:boxStrokeColor="@color/input_stroke_color">
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="6dp"
+            android:text="Selecciona productos del catálogo:"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etEstadoPedido"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Estado (pendiente / aceptado / en_camino / entregado)"
-                android:inputType="text"
-                android:maxLines="1"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp" />
-        </com.google.android.material.textfield.TextInputLayout>
+        <!-- Indicador de Carga Productos -->
+        <ProgressBar
+            android:id="@+id/pbLoadingProductosPedido"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginVertical="16dp"
+            android:indeterminateTint="@color/blue_primary"
+            android:visibility="gone" />
 
-        <!-- Botones de Acción -->
-        <LinearLayout
+        <!-- RecyclerView para Selección de Productos -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvSeleccionProductosPedido"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:gravity="end"
-            android:orientation="horizontal">
+            android:layout_height="180dp"
+            android:clipToPadding="false" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCancelarDialogPedido"
-                style="@style/Widget.Material3.Button.TextButton"
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:background="@color/border_color" />
+
+        <!-- Fila de Total y Botones -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="Cancelar"
-                android:textColor="@color/text_secondary" />
+                android:layout_centerVertical="true"
+                android:orientation="vertical">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnGuardarDialogPedido"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TOTAL PEDIDO"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/tvTotalPedidoCalculado"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="S/ 0.00"
+                    android:textColor="@color/blue_primary"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:backgroundTint="@color/blue_primary"
-                android:text="Guardar"
-                android:textColor="@color/white"
-                app:cornerRadius="10dp" />
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:orientation="horizontal">
 
-        </LinearLayout>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCancelarDialogPedido"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:text="Cancelar"
+                    android:textColor="@color/text_secondary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnGuardarDialogPedido"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/blue_primary"
+                    android:text="Confirmar"
+                    android:textColor="@color/white"
+                    app:cornerRadius="10dp" />
+
+            </LinearLayout>
+
+        </RelativeLayout>
 
     </LinearLayout>
 
