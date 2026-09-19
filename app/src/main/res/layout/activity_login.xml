@@ -4,41 +4,76 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/login_bg_dark"
     android:fillViewport="true"
-    android:background="@color/bg_light"
+    android:overScrollMode="never"
     tools:context=".LoginActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="24dp"
-        android:paddingVertical="32dp">
+        android:paddingTop="28dp"
+        android:paddingBottom="24dp">
+
+        <!-- Slogan Superior Derecho -->
+        <TextView
+            android:id="@+id/tvSloganTop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:lineSpacingExtra="2dp"
+            android:text="Organiza.\nControla.\nHaz crecer\ntu negocio."
+            android:textColor="@color/login_text_light"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <View
+            android:id="@+id/lineSloganAccent"
+            android:layout_width="60dp"
+            android:layout_height="3dp"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_login_button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvSloganTop" />
 
         <!-- Logo Icon ADISAN -->
-        <ImageView
-            android:id="@+id/ivLogo"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:contentDescription="@string/company_name"
-            android:src="@drawable/ic_adisan_logo"
-            app:layout_constraintEnd_toEndOf="parent"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardLogoContainer"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            app:cardBackgroundColor="@color/login_accent_blue"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            app:strokeWidth="0dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/ivLogo"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center"
+                android:contentDescription="@string/company_name"
+                android:src="@drawable/ic_adisan_logo"
+                app:tint="@color/white" />
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- Titulo de Marca -->
         <TextView
             android:id="@+id/tvBrandName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/app_name"
-            android:textColor="@color/blue_primary"
+            android:layout_marginTop="14dp"
+            android:letterSpacing="0.05"
+            android:text="ADISAN"
+            android:textColor="@color/white"
             android:textSize="28sp"
             android:textStyle="bold"
-            android:letterSpacing="0.05"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/ivLogo" />
+            app:layout_constraintTop_toBottomOf="@id/cardLogoContainer" />
 
         <!-- Subtitulo Nombre de Empresa -->
         <TextView
@@ -46,39 +81,45 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="@string/company_name"
-            android:textColor="@color/text_primary"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:text="Distribuciones ADISAN"
+            android:textColor="@color/login_text_muted"
+            android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvBrandName" />
+
+        <!-- Barrita Acento Azul -->
+        <View
+            android:id="@+id/lineBrandAccent"
+            android:layout_width="24dp"
+            android:layout_height="3dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_login_button"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvCompanyName" />
 
         <!-- Descripcion Corta del Sistema -->
         <TextView
             android:id="@+id/tvHeaderDescription"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="center"
-            android:text="@string/header_description"
-            android:textColor="@color/text_secondary"
+            android:layout_marginTop="12dp"
+            android:text="Gestiona tus productos, pedidos e inventario de manera sencilla y segura."
+            android:textColor="@color/login_text_muted"
             android:textSize="13sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvCompanyName"
-            app:layout_constraintWidth_percent="0.9" />
+            app:layout_constraintTop_toBottomOf="@id/lineBrandAccent" />
 
-        <!-- Tarjeta de Login -->
+        <!-- Tarjeta Principal de Login -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardLogin"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            app:cardBackgroundColor="@color/card_bg"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp"
-            app:strokeColor="@color/border_color"
+            android:layout_marginTop="20dp"
+            app:cardBackgroundColor="@color/login_card_dark"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="6dp"
+            app:strokeColor="@color/login_card_border"
             app:strokeWidth="1dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -88,16 +129,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="24dp">
+                android:padding="20dp">
 
                 <!-- Titulo Tarjeta -->
                 <TextView
                     android:id="@+id/tvLoginTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/login_title"
-                    android:textColor="@color/text_primary"
-                    android:textSize="22sp"
+                    android:text="Iniciar sesión"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
 
                 <!-- Subtitulo Tarjeta -->
@@ -105,21 +146,10 @@
                     android:id="@+id/tvLoginSubtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/login_subtitle"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
-
-                <!-- Etiqueta Usuario -->
-                <TextView
-                    android:id="@+id/lblUsuario"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:text="@string/label_usuario"
-                    android:textColor="@color/text_primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:layout_marginTop="2dp"
+                    android:text="Ingresa tus credenciales para continuar"
+                    android:textColor="@color/login_text_muted"
+                    android:textSize="13sp" />
 
                 <!-- Campo Usuario -->
                 <com.google.android.material.textfield.TextInputLayout
@@ -127,37 +157,29 @@
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
+                    android:layout_marginTop="16dp"
+                    app:boxBackgroundColor="@color/login_input_bg"
                     app:boxCornerRadiusBottomEnd="12dp"
                     app:boxCornerRadiusBottomStart="12dp"
                     app:boxCornerRadiusTopEnd="12dp"
                     app:boxCornerRadiusTopStart="12dp"
-                    app:boxStrokeColor="@color/input_stroke_color"
+                    app:boxStrokeColor="@color/login_input_border"
+                    app:hintTextColor="@color/login_input_hint"
                     app:startIconDrawable="@drawable/ic_user"
-                    app:startIconTint="@color/blue_primary">
+                    app:startIconTint="@color/login_text_muted">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etUsuario"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/hint_usuario"
+                        android:hint="Usuario"
                         android:inputType="textPersonName"
                         android:maxLines="1"
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp" />
+                        android:textColor="@color/white"
+                        android:textColorHint="@color/login_input_hint"
+                        android:textSize="14sp" />
 
                 </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Etiqueta Contraseña -->
-                <TextView
-                    android:id="@+id/lblPassword"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/label_password"
-                    android:textColor="@color/text_primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
 
                 <!-- Campo Contraseña -->
                 <com.google.android.material.textfield.TextInputLayout
@@ -165,90 +187,329 @@
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
+                    android:layout_marginTop="12dp"
+                    app:boxBackgroundColor="@color/login_input_bg"
                     app:boxCornerRadiusBottomEnd="12dp"
                     app:boxCornerRadiusBottomStart="12dp"
                     app:boxCornerRadiusTopEnd="12dp"
                     app:boxCornerRadiusTopStart="12dp"
-                    app:boxStrokeColor="@color/input_stroke_color"
+                    app:boxStrokeColor="@color/login_input_border"
                     app:endIconMode="password_toggle"
-                    app:endIconTint="@color/text_secondary"
+                    app:endIconTint="@color/login_text_muted"
+                    app:hintTextColor="@color/login_input_hint"
                     app:startIconDrawable="@drawable/ic_lock"
-                    app:startIconTint="@color/blue_primary">
+                    app:startIconTint="@color/login_text_muted">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etPassword"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/hint_password"
+                        android:hint="Contraseña"
                         android:inputType="textPassword"
                         android:maxLines="1"
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp" />
+                        android:textColor="@color/white"
+                        android:textColorHint="@color/login_input_hint"
+                        android:textSize="14sp" />
 
                 </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Fila Recordarme y Olvidaste contraseña -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp">
+
+                    <CheckBox
+                        android:id="@+id/cbRecordarme"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:buttonTint="@color/login_accent_blue"
+                        android:checked="true"
+                        android:minHeight="36dp"
+                        android:paddingStart="4dp"
+                        android:paddingEnd="0dp"
+                        android:text="Recordarme"
+                        android:textColor="@color/login_text_light"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tvOlvidastePassword"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:padding="4dp"
+                        android:text="¿Olvidaste tu contraseña?"
+                        android:textColor="@color/login_accent_bright"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </RelativeLayout>
 
                 <!-- Boton Iniciar Sesion -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnLogin"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:backgroundTint="@color/blue_primary"
-                    android:minHeight="52dp"
-                    android:text="@string/btn_login"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="16dp"
+                    android:backgroundTint="@color/login_accent_blue"
+                    android:text="Iniciar sesión"
                     android:textAllCaps="false"
                     android:textColor="@color/white"
-                    android:textSize="16sp"
+                    android:textSize="15sp"
                     android:textStyle="bold"
                     app:cornerRadius="12dp"
-                    app:elevation="2dp" />
+                    app:elevation="4dp"
+                    app:icon="@drawable/ic_chevron_right"
+                    app:iconGravity="textEnd"
+                    app:iconPadding="8dp"
+                    app:iconTint="@color/white" />
 
-                <!-- Indicador Acceso Seguro -->
+                <!-- Separador 'o continúa con' -->
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="18dp"
                     android:gravity="center"
                     android:orientation="horizontal">
 
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:contentDescription="@string/secure_access"
-                        android:src="@drawable/ic_shield_check"
-                        app:tint="@color/security_green" />
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"
+                        android:background="@color/login_card_border" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:text="@string/secure_access"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp" />
+                        android:layout_marginHorizontal="10dp"
+                        android:text="o continúa con"
+                        android:textColor="@color/login_text_muted"
+                        android:textSize="12sp" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"
+                        android:background="@color/login_card_border" />
+                </LinearLayout>
+
+                <!-- Botones Circulares de Acceso Rapido -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="14dp"
+                    android:orientation="horizontal">
+
+                    <!-- Google -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btnQuickGoogle"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="12dp"
+                        app:cardBackgroundColor="@color/white"
+                        app:cardCornerRadius="22dp"
+                        app:cardElevation="2dp"
+                        app:strokeWidth="0dp">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="Google"
+                            android:src="@drawable/ic_google" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Microsoft -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btnQuickMicrosoft"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginHorizontal="6dp"
+                        app:cardBackgroundColor="@color/white"
+                        app:cardElevation="2dp"
+                        app:cardCornerRadius="22dp"
+                        app:strokeWidth="0dp">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="Microsoft"
+                            android:src="@drawable/ic_microsoft" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Fingerprint -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btnQuickBiometric"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginStart="12dp"
+                        app:cardBackgroundColor="@color/white"
+                        app:cardElevation="2dp"
+                        app:cardCornerRadius="22dp"
+                        app:strokeWidth="0dp">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="Biométrico"
+                            android:src="@drawable/ic_fingerprint"
+                            app:tint="@color/login_accent_blue" />
+                    </com.google.android.material.card.MaterialCardView>
 
                 </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="10dp"
+                    android:text="Acceso rápido y seguro"
+                    android:textColor="@color/login_text_muted"
+                    android:textSize="11sp" />
 
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Pie de Pagina -->
-        <TextView
-            android:id="@+id/tvFooter"
-            android:layout_width="wrap_content"
+        <!-- 3 Columnas Inferiores de Características -->
+        <LinearLayout
+            android:id="@+id/layoutFeatures"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:layout_marginBottom="8dp"
-            android:text="@string/copyright"
-            android:textColor="@color/text_muted"
-            android:textSize="12sp"
+            android:baselineAligned="false"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cardLogin">
+
+            <!-- Columna 1: Inventario al día -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="Inventario"
+                    android:src="@drawable/ic_box"
+                    app:tint="@color/login_accent_bright" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:text="Inventario\nal día"
+                    android:textColor="@color/login_text_light"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center_vertical"
+                android:background="@color/login_card_border" />
+
+            <!-- Columna 2: Pedidos más rápidos -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="Pedidos"
+                    android:src="@drawable/ic_truck"
+                    app:tint="@color/login_accent_bright" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:text="Pedidos\nmás rápidos"
+                    android:textColor="@color/login_text_light"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center_vertical"
+                android:background="@color/login_card_border" />
+
+            <!-- Columna 3: Tu negocio en crecimiento -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="Crecimiento"
+                    android:src="@drawable/ic_chart_growth"
+                    app:tint="@color/login_accent_bright" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:text="Tu negocio\nen crecimiento"
+                    android:textColor="@color/login_text_light"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Pie de Pagina -->
+        <LinearLayout
+            android:id="@+id/layoutFooter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/cardLogin"
-            app:layout_constraintVertical_bias="1.0" />
+            app:layout_constraintTop_toBottomOf="@id/layoutFeatures">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="© 2026 Distribuciones ADISAN"
+                android:textColor="@color/login_text_muted"
+                android:textSize="11sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="v1.0.0"
+                android:textColor="@color/login_text_muted"
+                android:textSize="10sp" />
+
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

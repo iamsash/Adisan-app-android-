@@ -5,12 +5,14 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.Gson;
@@ -27,6 +29,11 @@ public class LoginActivity extends AppCompatActivity {
     private TextInputLayout tilPassword;
     private MaterialButton btnLogin;
 
+    private TextView tvOlvidastePassword;
+    private MaterialCardView btnQuickGoogle;
+    private MaterialCardView btnQuickMicrosoft;
+    private MaterialCardView btnQuickBiometric;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,13 +42,8 @@ public class LoginActivity extends AppCompatActivity {
         // Inicializar vistas
         initViews();
 
-        // Configurar listener para el botón de inicio de sesión
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                validarYIniciarSesion();
-            }
-        });
+        // Configurar listeners
+        setupListeners();
     }
 
     private void initViews() {
@@ -50,6 +52,30 @@ public class LoginActivity extends AppCompatActivity {
         tilUsuario = findViewById(R.id.tilUsuario);
         tilPassword = findViewById(R.id.tilPassword);
         btnLogin = findViewById(R.id.btnLogin);
+
+        tvOlvidastePassword = findViewById(R.id.tvOlvidastePassword);
+        btnQuickGoogle = findViewById(R.id.btnQuickGoogle);
+        btnQuickMicrosoft = findViewById(R.id.btnQuickMicrosoft);
+        btnQuickBiometric = findViewById(R.id.btnQuickBiometric);
+    }
+
+    private void setupListeners() {
+        if (btnLogin != null) {
+            btnLogin.setOnClickListener(v -> validarYIniciarSesion());
+        }
+
+        if (tvOlvidastePassword != null) {
+            tvOlvidastePassword.setOnClickListener(v ->
+                Toast.makeText(LoginActivity.this, "Por favor contacta al administrador del sistema ADISAN para restablecer tu contraseña.", Toast.LENGTH_LONG).show()
+            );
+        }
+
+        View.OnClickListener quickLoginListener = v ->
+            Toast.makeText(LoginActivity.this, "Acceso rápido habilitado para usuarios registrados", Toast.LENGTH_SHORT).show();
+
+        if (btnQuickGoogle != null) btnQuickGoogle.setOnClickListener(quickLoginListener);
+        if (btnQuickMicrosoft != null) btnQuickMicrosoft.setOnClickListener(quickLoginListener);
+        if (btnQuickBiometric != null) btnQuickBiometric.setOnClickListener(quickLoginListener);
     }
 
     private void validarYIniciarSesion() {
@@ -91,14 +117,14 @@ public class LoginActivity extends AppCompatActivity {
 
     private void ejecutarLogin(String usuario, String password) {
         // Deshabilitar botón durante la petición
-        btnLogin.setEnabled(false);
+        if (btnLogin != null) btnLogin.setEnabled(false);
 
         LoginRequest request = new LoginRequest(usuario, password);
 
         ApiClient.getApiService().login(request).enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> response) {
-                btnLogin.setEnabled(true);
+                if (btnLogin != null) btnLogin.setEnabled(true);
 
                 if (response.isSuccessful() && response.body() != null) {
                     LoginResponse res = response.body();
@@ -140,7 +166,7 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
-                btnLogin.setEnabled(true);
+                if (btnLogin != null) btnLogin.setEnabled(true);
                 Toast.makeText(LoginActivity.this,
                         "Error de conexión con el servidor (10.0.2.2:3000). Verifica que el backend esté ejecutándose.",
                         Toast.LENGTH_LONG).show();

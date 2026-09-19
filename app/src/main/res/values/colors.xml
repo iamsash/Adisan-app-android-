@@ -31,4 +31,16 @@
     <color name="accent_red_bg">#FEE2E2</color>
     <color name="accent_teal">#0D9488</color>
     <color name="accent_teal_bg">#CCFBF1</color>
+
+    <!-- Dark Theme Colors para Pantalla Login -->
+    <color name="login_bg_dark">#08132A</color>
+    <color name="login_card_dark">#0E2142</color>
+    <color name="login_card_border">#1A3762</color>
+    <color name="login_input_bg">#122B52</color>
+    <color name="login_input_border">#1F4072</color>
+    <color name="login_input_hint">#5B7BA8</color>
+    <color name="login_text_light">#E2ECFF</color>
+    <color name="login_text_muted">#7D99C6</color>
+    <color name="login_accent_blue">#007AFF</color>
+    <color name="login_accent_bright">#0084FF</color>
 </resources>
