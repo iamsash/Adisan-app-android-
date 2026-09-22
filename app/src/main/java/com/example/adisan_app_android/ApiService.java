@@ -27,6 +27,9 @@ public interface ApiService {
     @GET("api/usuarios")
     Call<UsuarioResponse> getUsuarios();
 
+    @GET("api/usuarios/{id}")
+    Call<Usuario> getUsuarioById(@Path("id") int id);
+
     @GET("api/usuarios")
     Call<UsuarioResponse> buscarUsuarios(@Query("search") String search);
 
@@ -35,6 +38,38 @@ public interface ApiService {
 
     @POST("api/usuarios")
     Call<UsuarioResponse> crearUsuario(@Body Usuario usuario);
+
+    @PUT("api/usuarios/{id}")
+    Call<UsuarioResponse> editarUsuario(@Path("id") int id, @Body Usuario usuario);
+
+    @DELETE("api/usuarios/{id}")
+    Call<UsuarioResponse> eliminarUsuario(@Path("id") int id);
+
+    @PUT("api/usuarios/{id}/reset-password")
+    Call<UsuarioResponse> resetPasswordUsuario(@Path("id") int id, @Body ResetPasswordRequest request);
+
+    // ==========================================
+    // PROVEEDORES
+    // ==========================================
+
+    @GET("api/proveedores")
+    Call<ProveedorResponse> getProveedores();
+
+    @GET("api/proveedores")
+    Call<List<Proveedor>> getProveedoresDirectList();
+
+    @POST("api/proveedores")
+    Call<ProveedorResponse> crearProveedor(@Body Proveedor proveedor);
+
+    // ==========================================
+    // CATEGORÍAS
+    // ==========================================
+
+    @GET("api/categorias")
+    Call<List<Categoria>> getCategorias();
+
+    @POST("api/categorias")
+    Call<CategoriaResponse> crearCategoria(@Body Categoria categoria);
 
     // ==========================================
     // CRUD PRODUCTOS

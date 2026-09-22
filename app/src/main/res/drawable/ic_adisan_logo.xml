@@ -1,19 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="72dp"
-    android:height="72dp"
-    android:viewportWidth="72"
-    android:viewportHeight="72">
-    <!-- Contenedor cuadrado redondeado de marca -->
-    <path
-        android:fillColor="#1E40AF"
-        android:pathData="M16,4 L56,4 A12,12 0 0,1 68,16 L68,56 A12,12 0 0,1 56,68 L16,68 A12,12 0 0,1 4,56 L4,16 A12,12 0 0,1 16,4 Z" />
-    <!-- Letra "A" estilizada corporativa -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M36,16 L50,52 L41.5,52 L37.8,42 L26.2,42 L22.5,52 L14,52 Z M32,27 L28.3,37 L35.7,37 Z" />
-    <!-- Detalle decorativo azul claro -->
-    <path
-        android:fillColor="#60A5FA"
-        android:pathData="M48,20 L56,20 L56,28 L48,28 Z" />
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+  <!-- Silueta Principal de la Letra A -->
+  <path
+      android:fillColor="#FFFFFFFF"
+      android:pathData="M24,4 L8,38 L14.5,38 L17.5,31 L30.5,31 L33.5,38 L40,38 Z M24,12 L28.2,22 L19.8,22 Z"/>
+  <!-- Caja Isométrica 3D en la Base -->
+  <path
+      android:fillColor="#FFFFFFFF"
+      android:pathData="M24,28.5 L29.5,31.5 L24,34.5 L18.5,31.5 Z"/>
+  <path
+      android:fillColor="#FFFFFFFF"
+      android:pathData="M18.5,32.5 L23.5,35.5 L23.5,42 L18.5,39 Z"/>
+  <path
+      android:fillColor="#FFFFFFFF"
+      android:pathData="M29.5,32.5 L24.5,35.5 L24.5,42 L29.5,39 Z"/>
 </vector>

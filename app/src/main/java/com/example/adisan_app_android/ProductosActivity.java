@@ -7,9 +7,11 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -303,6 +305,10 @@ public class ProductosActivity extends AppCompatActivity {
         TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitle);
         TextView tvSubtitle = dialogView.findViewById(R.id.tvDialogSubtitle);
 
+        Spinner spinnerProveedor = dialogView.findViewById(R.id.spinnerProveedor);
+        Spinner spinnerCategoria = dialogView.findViewById(R.id.spinnerCategoria);
+        MaterialButton btnCrearCategoria = dialogView.findViewById(R.id.btnCrearCategoria);
+
         TextInputLayout tilNombre = dialogView.findViewById(R.id.tilNombre);
         TextInputLayout tilStock = dialogView.findViewById(R.id.tilStock);
         TextInputLayout tilPrecioCompra = dialogView.findViewById(R.id.tilPrecioCompra);
@@ -316,6 +322,14 @@ public class ProductosActivity extends AppCompatActivity {
 
         MaterialButton btnCancelar = dialogView.findViewById(R.id.btnCancelarDialog);
         MaterialButton btnGuardar = dialogView.findViewById(R.id.btnGuardarDialog);
+
+        // Cargar Proveedores y Categorías en los Spinners
+        cargarProveedoresEnSpinner(spinnerProveedor, productoExistente);
+        cargarCategoriasEnSpinner(spinnerCategoria, productoExistente);
+
+        if (btnCrearCategoria != null) {
+            btnCrearCategoria.setOnClickListener(v -> mostrarDialogoNuevaCategoria(spinnerCategoria));
+        }
 
         if (esEdicion) {
             if (tvTitle != null) tvTitle.setText("Editar Producto");
@@ -376,6 +390,19 @@ public class ProductosActivity extends AppCompatActivity {
                     int stock = Integer.parseInt(stockStr);
                     int factor = !TextUtils.isEmpty(factorStr) ? Integer.parseInt(factorStr) : 1;
 
+                    // Obtener Proveedor y Categoría seleccionados
+                    int proveedorId = 1;
+                    if (spinnerProveedor != null && spinnerProveedor.getSelectedItem() instanceof Proveedor) {
+                        Proveedor pSel = (Proveedor) spinnerProveedor.getSelectedItem();
+                        proveedorId = pSel.getId();
+                    }
+
+                    int categoriaId = 1;
+                    if (spinnerCategoria != null && spinnerCategoria.getSelectedItem() instanceof Categoria) {
+                        Categoria cSel = (Categoria) spinnerCategoria.getSelectedItem();
+                        categoriaId = cSel.getId();
+                    }
+
                     Producto productoRequest = esEdicion ? productoExistente : new Producto();
                     productoRequest.setProductoNombre(nombre);
                     productoRequest.setStock(stock);
@@ -383,8 +410,8 @@ public class ProductosActivity extends AppCompatActivity {
                     productoRequest.setPrecioCompra(precioCompraStr);
                     productoRequest.setPrecioVenta(precioVentaStr);
                     productoRequest.setActivo(1);
-                    productoRequest.setProveedorId(1);
-                    productoRequest.setCategoriaId(1);
+                    productoRequest.setProveedorId(proveedorId);
+                    productoRequest.setCategoriaId(categoriaId);
                     if (!esEdicion) {
                         productoRequest.setPresentacionId(1);
                         productoRequest.setNivel(1);
@@ -400,6 +427,208 @@ public class ProductosActivity extends AppCompatActivity {
         }
 
         dialog.show();
+    }
+
+    private void cargarProveedoresEnSpinner(Spinner spinnerProveedor, Producto productoExistente) {
+        ApiClient.getApiService().getProveedores().enqueue(new Callback<ProveedorResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ProveedorResponse> call, @NonNull Response<ProveedorResponse> response) {
+                List<Proveedor> lista = new ArrayList<>();
+                if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                    lista = response.body().getData();
+                }
+
+                if (lista.isEmpty()) {
+                    cargarProveedoresDirecto(spinnerProveedor, productoExistente);
+                } else {
+                    configurarSpinnerProveedores(spinnerProveedor, lista, productoExistente);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ProveedorResponse> call, @NonNull Throwable t) {
+                cargarProveedoresDirecto(spinnerProveedor, productoExistente);
+            }
+        });
+    }
+
+    private void cargarProveedoresDirecto(Spinner spinnerProveedor, Producto productoExistente) {
+        ApiClient.getApiService().getProveedoresDirectList().enqueue(new Callback<List<Proveedor>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Proveedor>> call, @NonNull Response<List<Proveedor>> response) {
+                List<Proveedor> lista = new ArrayList<>();
+                if (response.isSuccessful() && response.body() != null) {
+                    lista = response.body();
+                }
+                configurarSpinnerProveedores(spinnerProveedor, lista, productoExistente);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<Proveedor>> call, @NonNull Throwable t) {
+                configurarSpinnerProveedores(spinnerProveedor, new ArrayList<>(), productoExistente);
+            }
+        });
+    }
+
+    private void configurarSpinnerProveedores(Spinner spinnerProveedor, List<Proveedor> proveedores, Producto productoExistente) {
+        if (proveedores.isEmpty()) {
+            Proveedor pDefault = new Proveedor();
+            pDefault.setId(1);
+            pDefault.setNombreEmpresa("Proveedor General");
+            proveedores.add(pDefault);
+        }
+
+        ArrayAdapter<Proveedor> adapterProv = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, proveedores);
+        adapterProv.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        if (spinnerProveedor != null) {
+            spinnerProveedor.setAdapter(adapterProv);
+
+            if (productoExistente != null) {
+                for (int i = 0; i < proveedores.size(); i++) {
+                    if (proveedores.get(i).getId() == productoExistente.getProveedorId()) {
+                        spinnerProveedor.setSelection(i);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private void cargarCategoriasEnSpinner(Spinner spinnerCategoria, Producto productoExistente) {
+        ApiClient.getApiService().getCategorias().enqueue(new Callback<List<Categoria>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Categoria>> call, @NonNull Response<List<Categoria>> response) {
+                List<Categoria> lista = new ArrayList<>();
+                if (response.isSuccessful() && response.body() != null) {
+                    lista = response.body();
+                }
+                configurarSpinnerCategorias(spinnerCategoria, lista, productoExistente, null);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<Categoria>> call, @NonNull Throwable t) {
+                configurarSpinnerCategorias(spinnerCategoria, new ArrayList<>(), productoExistente, null);
+            }
+        });
+    }
+
+    private void configurarSpinnerCategorias(Spinner spinnerCategoria, List<Categoria> categorias, Producto productoExistente, Categoria categoriaASeleccionar) {
+        if (categorias.isEmpty()) {
+            Categoria cDefault = new Categoria("Bebidas", 1);
+            cDefault.setId(1);
+            categorias.add(cDefault);
+        }
+
+        ArrayAdapter<Categoria> adapterCat = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categorias);
+        adapterCat.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        if (spinnerCategoria != null) {
+            spinnerCategoria.setAdapter(adapterCat);
+
+            if (categoriaASeleccionar != null) {
+                for (int i = 0; i < categorias.size(); i++) {
+                    if (categorias.get(i).getNombre().equalsIgnoreCase(categoriaASeleccionar.getNombre())) {
+                        spinnerCategoria.setSelection(i);
+                        break;
+                    }
+                }
+            } else if (productoExistente != null) {
+                for (int i = 0; i < categorias.size(); i++) {
+                    if (categorias.get(i).getId() == productoExistente.getCategoriaId()) {
+                        spinnerCategoria.setSelection(i);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // Modal para registrar nueva categoría
+    private void mostrarDialogoNuevaCategoria(Spinner spinnerCategoria) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_nueva_categoria, null);
+        builder.setView(dialogView);
+
+        AlertDialog dialogCat = builder.create();
+        if (dialogCat.getWindow() != null) {
+            dialogCat.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        TextInputLayout tilNombre = dialogView.findViewById(R.id.tilNombreCategoria);
+        TextInputLayout tilFactor = dialogView.findViewById(R.id.tilFactorCategoria);
+
+        TextInputEditText etNombre = dialogView.findViewById(R.id.etNombreCategoria);
+        TextInputEditText etFactor = dialogView.findViewById(R.id.etFactorCategoria);
+
+        MaterialButton btnCancelar = dialogView.findViewById(R.id.btnCancelarCategoria);
+        MaterialButton btnGuardar = dialogView.findViewById(R.id.btnGuardarCategoria);
+
+        if (btnCancelar != null) {
+            btnCancelar.setOnClickListener(v -> dialogCat.dismiss());
+        }
+
+        if (btnGuardar != null) {
+            btnGuardar.setOnClickListener(v -> {
+                if (tilNombre != null) tilNombre.setError(null);
+                if (tilFactor != null) tilFactor.setError(null);
+
+                String nombre = etNombre != null && etNombre.getText() != null ? etNombre.getText().toString().trim() : "";
+                String factorStr = etFactor != null && etFactor.getText() != null ? etFactor.getText().toString().trim() : "1";
+
+                boolean esValido = true;
+
+                if (TextUtils.isEmpty(nombre)) {
+                    if (tilNombre != null) tilNombre.setError("Ingresa el nombre de la categoría");
+                    esValido = false;
+                }
+
+                int factor = 1;
+                try {
+                    factor = Integer.parseInt(factorStr);
+                    if (factor < 1) {
+                        if (tilFactor != null) tilFactor.setError("El factor debe ser mayor a 0");
+                        esValido = false;
+                    }
+                } catch (Exception e) {
+                    if (tilFactor != null) tilFactor.setError("Ingresa un número válido");
+                    esValido = false;
+                }
+
+                if (esValido) {
+                    Categoria nuevaCat = new Categoria(nombre, factor);
+                    ejecutarCrearCategoria(nuevaCat, dialogCat, btnGuardar, spinnerCategoria);
+                }
+            });
+        }
+
+        dialogCat.show();
+    }
+
+    private void ejecutarCrearCategoria(Categoria nuevaCategoria, AlertDialog dialogCat, MaterialButton btnGuardar, Spinner spinnerCategoria) {
+        if (btnGuardar != null) btnGuardar.setEnabled(false);
+
+        ApiClient.getApiService().crearCategoria(nuevaCategoria).enqueue(new Callback<CategoriaResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<CategoriaResponse> call, @NonNull Response<CategoriaResponse> response) {
+                if (btnGuardar != null) btnGuardar.setEnabled(true);
+
+                if (response.isSuccessful()) {
+                    Toast.makeText(ProductosActivity.this, "¡Categoría registrada correctamente!", Toast.LENGTH_SHORT).show();
+                    if (dialogCat != null && dialogCat.isShowing()) dialogCat.dismiss();
+
+                    // Recargar categorías en el Spinner y auto-seleccionar la nueva
+                    cargarCategoriasEnSpinner(spinnerCategoria, null);
+                } else {
+                    String msg = "Error al crear categoría (" + response.code() + ")";
+                    Toast.makeText(ProductosActivity.this, msg, Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<CategoriaResponse> call, @NonNull Throwable t) {
+                if (btnGuardar != null) btnGuardar.setEnabled(true);
+                Toast.makeText(ProductosActivity.this, "Error de conexión al crear categoría", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void ejecutarCrearProducto(Producto producto, AlertDialog dialog, MaterialButton btnGuardar) {

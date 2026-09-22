@@ -3,22 +3,40 @@ package com.example.adisan_app_android;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.navigation.NavigationBarView;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+import com.google.gson.Gson;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import retrofit2.Call;
@@ -26,6 +44,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class DashboardActivity extends AppCompatActivity {
+
+    private DrawerLayout drawerLayout;
 
     private TextView tvGreeting;
     private TextView tvSubGreeting;
@@ -51,11 +71,12 @@ public class DashboardActivity extends AppCompatActivity {
     private MaterialCardView cardStockBajo;
     private MaterialCardView cardEnCamino;
 
-    // Accesos rápidos
+    // Accesos rápidos y Logo Header
+    private MaterialCardView cardLogoContainer;
     private MaterialCardView cardQuickProductos;
     private MaterialCardView cardQuickPedidos;
     private MaterialCardView cardQuickOfertas;
-    private MaterialCardView cardQuickStock;
+    private MaterialCardView cardQuickProveedores;
 
     // Navegación e iconos superiores
     private BottomNavigationView bottomNavigation;
@@ -76,8 +97,9 @@ public class DashboardActivity extends AppCompatActivity {
         // 3. Consumir backend GET /api/dashboard
         obtenerDatosDashboard();
 
-        // 4. Configurar listeners de interacción
+        // 4. Configurar listeners de interacción y Sidebar
         setupListeners();
+        setupSidebar();
     }
 
     @Override
@@ -88,6 +110,8 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void initViews() {
+        drawerLayout = findViewById(R.id.drawerLayout);
+
         tvGreeting = findViewById(R.id.tvGreeting);
         tvSubGreeting = findViewById(R.id.tvSubGreeting);
         tvAvatarInitial = findViewById(R.id.tvAvatarInitial);
@@ -110,14 +134,105 @@ public class DashboardActivity extends AppCompatActivity {
         cardStockBajo = findViewById(R.id.cardStockBajo);
         cardEnCamino = findViewById(R.id.cardEnCamino);
 
+        cardLogoContainer = findViewById(R.id.cardLogoContainer);
         cardQuickProductos = findViewById(R.id.cardQuickProductos);
         cardQuickPedidos = findViewById(R.id.cardQuickPedidos);
         cardQuickOfertas = findViewById(R.id.cardQuickOfertas);
-        cardQuickStock = findViewById(R.id.cardQuickStock);
+        cardQuickProveedores = findViewById(R.id.cardQuickProveedores);
 
         bottomNavigation = findViewById(R.id.bottomNavigation);
         btnNotifications = findViewById(R.id.btnNotifications);
         btnAvatar = findViewById(R.id.btnAvatar);
+    }
+
+    private void setupSidebar() {
+        // Abrir Sidebar al tocar el botón de menú hamburguesa de 3 líneas o el logo en el header
+        View.OnClickListener openSidebarListener = v -> {
+            if (drawerLayout != null) {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        };
+
+        View btnMenuHamburguesa = findViewById(R.id.btnMenuHamburguesa);
+        if (btnMenuHamburguesa != null) btnMenuHamburguesa.setOnClickListener(openSidebarListener);
+
+        if (cardLogoContainer != null) cardLogoContainer.setOnClickListener(openSidebarListener);
+        ImageView ivHeaderLogo = findViewById(R.id.ivHeaderLogo);
+        if (ivHeaderLogo != null) ivHeaderLogo.setOnClickListener(openSidebarListener);
+
+        // Vistas dentro del Sidebar
+        ImageView btnCerrarSidebar = findViewById(R.id.btnCerrarSidebar);
+        View navPerfil = findViewById(R.id.navSidebarPerfil);
+        View navInicio = findViewById(R.id.navSidebarInicio);
+        View navProductos = findViewById(R.id.navSidebarProductos);
+        View navPedidos = findViewById(R.id.navSidebarPedidos);
+        View navUsuarios = findViewById(R.id.navSidebarUsuarios);
+        View navReportes = findViewById(R.id.navSidebarReportes);
+        View navConfiguracion = findViewById(R.id.navSidebarConfiguracion);
+        View navCerrarSesion = findViewById(R.id.navSidebarCerrarSesion);
+
+        if (btnCerrarSidebar != null) {
+            btnCerrarSidebar.setOnClickListener(v -> {
+                if (drawerLayout != null) drawerLayout.closeDrawer(GravityCompat.START);
+            });
+        }
+
+        if (navPerfil != null) {
+            navPerfil.setOnClickListener(v -> {
+                if (drawerLayout != null) drawerLayout.closeDrawer(GravityCompat.START);
+                mostrarDialogoPerfilUsuario();
+            });
+        }
+
+        if (navInicio != null) {
+            navInicio.setOnClickListener(v -> {
+                if (drawerLayout != null) drawerLayout.closeDrawer(GravityCompat.START);
+            });
+        }
+
+        if (navProductos != null) {
+            navProductos.setOnClickListener(v -> {
+                if (drawerLayout != null) drawerLayout.closeDrawer(GravityCompat.START);
+                Intent intent = new Intent(DashboardActivity.this, ProductosActivity.class);
+                startActivity(intent);
+            });
+        }
+
+        if (navPedidos != null) {
+            navPedidos.setOnClickListener(v -> {
+                if (drawerLayout != null) drawerLayout.closeDrawer(GravityCompat.START);
+                Intent intent = new Intent(DashboardActivity.this, PedidosActivity.class);
+                startActivity(intent);
+            });
+        }
+
+        if (navUsuarios != null) {
+            navUsuarios.setOnClickListener(v -> {
+                if (drawerLayout != null) drawerLayout.closeDrawer(GravityCompat.START);
+                mostrarDialogoListaUsuarios();
+            });
+        }
+
+        if (navReportes != null) {
+            navReportes.setOnClickListener(v -> {
+                if (drawerLayout != null) drawerLayout.closeDrawer(GravityCompat.START);
+                mostrarDialogoListaProveedores();
+            });
+        }
+
+        if (navConfiguracion != null) {
+            navConfiguracion.setOnClickListener(v -> {
+                if (drawerLayout != null) drawerLayout.closeDrawer(GravityCompat.START);
+                Toast.makeText(DashboardActivity.this, "Configuración del Sistema ADISAN v1.0.0", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        if (navCerrarSesion != null) {
+            navCerrarSesion.setOnClickListener(v -> {
+                if (drawerLayout != null) drawerLayout.closeDrawer(GravityCompat.START);
+                manejarCerrarSesion();
+            });
+        }
     }
 
     private void cargarDatosUsuario() {
@@ -240,7 +355,7 @@ public class DashboardActivity extends AppCompatActivity {
                         startActivity(intent);
                         return true;
                     } else if (itemId == R.id.nav_mas) {
-                        Toast.makeText(DashboardActivity.this, "Próximamente", Toast.LENGTH_SHORT).show();
+                        if (drawerLayout != null) drawerLayout.openDrawer(GravityCompat.START);
                         return true;
                     }
                     return false;
@@ -259,8 +374,10 @@ public class DashboardActivity extends AppCompatActivity {
                 } else if (id == R.id.cardQuickPedidos || id == R.id.cardPedidos || id == R.id.cardQuickOfertas || id == R.id.cardVentas) {
                     Intent intent = new Intent(DashboardActivity.this, PedidosActivity.class);
                     startActivity(intent);
-                } else if (id == R.id.cardQuickStock || id == R.id.cardUsuarios) {
-                    Toast.makeText(DashboardActivity.this, "Próximamente: Módulo Usuarios", Toast.LENGTH_SHORT).show();
+                } else if (id == R.id.cardQuickProveedores) {
+                    mostrarDialogoListaProveedores();
+                } else if (id == R.id.cardUsuarios) {
+                    mostrarDialogoListaUsuarios();
                 } else if (id == R.id.cardStockBajo) {
                     Intent intent = new Intent(DashboardActivity.this, ProductosActivity.class);
                     startActivity(intent);
@@ -281,7 +398,7 @@ public class DashboardActivity extends AppCompatActivity {
         if (cardQuickProductos != null) cardQuickProductos.setOnClickListener(quickAccessListener);
         if (cardQuickPedidos != null) cardQuickPedidos.setOnClickListener(quickAccessListener);
         if (cardQuickOfertas != null) cardQuickOfertas.setOnClickListener(quickAccessListener);
-        if (cardQuickStock != null) cardQuickStock.setOnClickListener(quickAccessListener);
+        if (cardQuickProveedores != null) cardQuickProveedores.setOnClickListener(quickAccessListener);
 
         if (btnNotifications != null) {
             btnNotifications.setOnClickListener(v ->
@@ -289,13 +406,834 @@ public class DashboardActivity extends AppCompatActivity {
             );
         }
 
-        View.OnClickListener avatarClickListener = v -> {
-            SharedPreferences preferences = getSharedPreferences("AdisanPrefs", MODE_PRIVATE);
-            String rol = preferences.getString("rol", "Usuario");
-            Toast.makeText(DashboardActivity.this, "Perfil | Rol: " + rol, Toast.LENGTH_SHORT).show();
-        };
+        View.OnClickListener avatarClickListener = v -> mostrarDialogoPerfilUsuario();
 
         if (btnAvatar != null) btnAvatar.setOnClickListener(avatarClickListener);
         if (tvAvatarInitial != null) tvAvatarInitial.setOnClickListener(avatarClickListener);
+        View cardAvatarContainer = findViewById(R.id.cardAvatarContainer);
+        if (cardAvatarContainer != null) cardAvatarContainer.setOnClickListener(avatarClickListener);
+    }
+
+    private void manejarCerrarSesion() {
+        Toast.makeText(this, "Cerrando sesión...", Toast.LENGTH_SHORT).show();
+
+        SharedPreferences preferences = getSharedPreferences("AdisanPrefs", MODE_PRIVATE);
+        preferences.edit().clear().apply();
+
+        Intent intent = new Intent(DashboardActivity.this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    // =======================================================
+    // MODAL DE PERFIL DE USUARIO LOGUEADO
+    // =======================================================
+
+    private void mostrarDialogoPerfilUsuario() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_perfil_usuario, null);
+        builder.setView(dialogView);
+
+        AlertDialog dialogPerfil = builder.create();
+        if (dialogPerfil.getWindow() != null) {
+            dialogPerfil.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        ProgressBar pbLoading = dialogView.findViewById(R.id.pbLoadingPerfil);
+        LinearLayout layoutCampos = dialogView.findViewById(R.id.layoutCamposPerfil);
+
+        TextView tvNombre = dialogView.findViewById(R.id.tvPerfilNombreCompleto);
+        TextView tvUsuario = dialogView.findViewById(R.id.tvPerfilUsuarioName);
+        TextView tvRol = dialogView.findViewById(R.id.tvPerfilRolBadge);
+        TextView tvInicial = dialogView.findViewById(R.id.tvPerfilInicial);
+
+        TextView tvDni = dialogView.findViewById(R.id.tvPerfilDni);
+        TextView tvRuc = dialogView.findViewById(R.id.tvPerfilRuc);
+        TextView tvTelefono = dialogView.findViewById(R.id.tvPerfilTelefono);
+        TextView tvCorreo = dialogView.findViewById(R.id.tvPerfilCorreo);
+        TextView tvDireccion = dialogView.findViewById(R.id.tvPerfilDireccion);
+
+        MaterialButton btnEditar = dialogView.findViewById(R.id.btnEditarPerfil);
+        MaterialButton btnCambiarClave = dialogView.findViewById(R.id.btnCambiarClavePerfil);
+        MaterialButton btnCerrar = dialogView.findViewById(R.id.btnCerrarPerfil);
+
+        if (btnCerrar != null) {
+            btnCerrar.setOnClickListener(v -> dialogPerfil.dismiss());
+        }
+
+        SharedPreferences preferences = getSharedPreferences("AdisanPrefs", MODE_PRIVATE);
+        int userId = preferences.getInt("id", 1);
+        String savedUser = preferences.getString("usuario", "admin");
+        String savedRol = preferences.getString("rol", "admin");
+
+        if (tvUsuario != null) tvUsuario.setText("Usuario: " + savedUser);
+        if (tvRol != null) tvRol.setText(savedRol.toUpperCase());
+        if (tvInicial != null && !savedUser.isEmpty()) {
+            tvInicial.setText(savedUser.substring(0, 1).toUpperCase());
+        }
+
+        // Cargar perfil completo desde backend GET /api/usuarios/:id
+        if (pbLoading != null) pbLoading.setVisibility(View.VISIBLE);
+        if (layoutCampos != null) layoutCampos.setVisibility(View.GONE);
+
+        final Usuario[] usuarioCargado = new Usuario[1];
+
+        ApiClient.getApiService().getUsuarioById(userId).enqueue(new Callback<Usuario>() {
+            @Override
+            public void onResponse(@NonNull Call<Usuario> call, @NonNull Response<Usuario> response) {
+                if (pbLoading != null) pbLoading.setVisibility(View.GONE);
+                if (layoutCampos != null) layoutCampos.setVisibility(View.VISIBLE);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    Usuario u = response.body();
+                    usuarioCargado[0] = u;
+
+                    if (tvNombre != null) tvNombre.setText(u.getNombreCompleto());
+                    if (tvUsuario != null) tvUsuario.setText("Usuario: " + u.getUsuario());
+                    if (tvRol != null) tvRol.setText(u.getRol().toUpperCase());
+                    if (tvInicial != null && !u.getUsuario().isEmpty()) {
+                        tvInicial.setText(u.getUsuario().substring(0, 1).toUpperCase());
+                    }
+
+                    if (tvDni != null) tvDni.setText(!TextUtils.isEmpty(u.getDni()) ? u.getDni() : "-");
+                    if (tvRuc != null) tvRuc.setText(!TextUtils.isEmpty(u.getRuc()) ? u.getRuc() : "-");
+                    if (tvTelefono != null) tvTelefono.setText(!TextUtils.isEmpty(u.getTelefono()) ? u.getTelefono() : "-");
+                    if (tvCorreo != null) tvCorreo.setText(!TextUtils.isEmpty(u.getCorreo()) ? u.getCorreo() : "-");
+                    if (tvDireccion != null) tvDireccion.setText(!TextUtils.isEmpty(u.getDireccion()) ? u.getDireccion() : "Sin dirección registrada");
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Usuario> call, @NonNull Throwable t) {
+                if (pbLoading != null) pbLoading.setVisibility(View.GONE);
+                if (layoutCampos != null) layoutCampos.setVisibility(View.VISIBLE);
+            }
+        });
+
+        if (btnEditar != null) {
+            btnEditar.setOnClickListener(v -> {
+                dialogPerfil.dismiss();
+                if (usuarioCargado[0] != null) {
+                    mostrarDialogoFormularioUsuario(usuarioCargado[0], null, null, null, null);
+                } else {
+                    Usuario uDefault = new Usuario();
+                    uDefault.setId(userId);
+                    uDefault.setUsuario(savedUser);
+                    uDefault.setRol(savedRol);
+                    mostrarDialogoFormularioUsuario(uDefault, null, null, null, null);
+                }
+            });
+        }
+
+        if (btnCambiarClave != null) {
+            btnCambiarClave.setOnClickListener(v -> {
+                dialogPerfil.dismiss();
+                if (usuarioCargado[0] != null) {
+                    mostrarDialogoResetPasswordUsuario(usuarioCargado[0]);
+                } else {
+                    Usuario uDefault = new Usuario();
+                    uDefault.setId(userId);
+                    mostrarDialogoResetPasswordUsuario(uDefault);
+                }
+            });
+        }
+
+        dialogPerfil.show();
+    }
+
+    // =======================================================
+    // HISTORIAL Y GESTION CRUD DE USUARIOS REALES
+    // =======================================================
+
+    private void mostrarDialogoListaUsuarios() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_lista_usuarios, null);
+        builder.setView(dialogView);
+
+        AlertDialog dialogLista = builder.create();
+        if (dialogLista.getWindow() != null) {
+            dialogLista.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        ProgressBar pbLoading = dialogView.findViewById(R.id.pbLoadingUsuarios);
+        LinearLayout layoutVacio = dialogView.findViewById(R.id.layoutUsuariosVacio);
+        RecyclerView rvUsuarios = dialogView.findViewById(R.id.rvUsuarios);
+        TextInputEditText etBuscar = dialogView.findViewById(R.id.etBuscarUsuario);
+        MaterialButton btnNuevo = dialogView.findViewById(R.id.btnNuevoUsuarioDialog);
+        MaterialButton btnCerrar = dialogView.findViewById(R.id.btnCerrarListaUsuarios);
+
+        if (rvUsuarios != null) {
+            rvUsuarios.setLayoutManager(new LinearLayoutManager(this));
+        }
+
+        UsuarioAdapter adapter = new UsuarioAdapter(this, new ArrayList<>());
+        if (rvUsuarios != null) {
+            rvUsuarios.setAdapter(adapter);
+        }
+
+        // Acciones CRUD desde el Adapter de Usuarios (Editar, Resetear Clave, Eliminar)
+        adapter.setOnUsuarioActionListener(new UsuarioAdapter.OnUsuarioActionListener() {
+            @Override
+            public void onEditar(Usuario usuario) {
+                mostrarDialogoFormularioUsuario(usuario, pbLoading, layoutVacio, rvUsuarios, adapter);
+            }
+
+            @Override
+            public void onResetPassword(Usuario usuario) {
+                mostrarDialogoResetPasswordUsuario(usuario);
+            }
+
+            @Override
+            public void onEliminar(Usuario usuario) {
+                mostrarDialogoConfirmarEliminarUsuario(usuario, pbLoading, layoutVacio, rvUsuarios, adapter);
+            }
+        });
+
+        if (btnCerrar != null) {
+            btnCerrar.setOnClickListener(v -> dialogLista.dismiss());
+        }
+
+        if (btnNuevo != null) {
+            btnNuevo.setOnClickListener(v -> mostrarDialogoFormularioUsuario(null, pbLoading, layoutVacio, rvUsuarios, adapter));
+        }
+
+        if (etBuscar != null) {
+            etBuscar.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    String query = s.toString().trim();
+                    cargarUsuariosEnDialogo(query, pbLoading, layoutVacio, rvUsuarios, adapter);
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {}
+            });
+        }
+
+        // Cargar usuarios reales desde MySQL
+        cargarUsuariosEnDialogo("", pbLoading, layoutVacio, rvUsuarios, adapter);
+
+        dialogLista.show();
+    }
+
+    private void cargarUsuariosEnDialogo(String query, ProgressBar pbLoading, LinearLayout layoutVacio, RecyclerView rvUsuarios, UsuarioAdapter adapter) {
+        if (pbLoading != null) pbLoading.setVisibility(View.VISIBLE);
+        if (rvUsuarios != null) rvUsuarios.setVisibility(View.GONE);
+        if (layoutVacio != null) layoutVacio.setVisibility(View.GONE);
+
+        Call<UsuarioResponse> call = TextUtils.isEmpty(query)
+                ? ApiClient.getApiService().getUsuarios()
+                : ApiClient.getApiService().buscarUsuarios(query);
+
+        call.enqueue(new Callback<UsuarioResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<UsuarioResponse> call, @NonNull Response<UsuarioResponse> response) {
+                if (pbLoading != null) pbLoading.setVisibility(View.GONE);
+
+                List<Usuario> lista = new ArrayList<>();
+                if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                    lista = response.body().getData();
+                }
+
+                if (lista.isEmpty()) {
+                    cargarUsuariosDirectoDialogo(pbLoading, layoutVacio, rvUsuarios, adapter);
+                } else {
+                    mostrarUsuariosEnDialogo(lista, layoutVacio, rvUsuarios, adapter);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<UsuarioResponse> call, @NonNull Throwable t) {
+                cargarUsuariosDirectoDialogo(pbLoading, layoutVacio, rvUsuarios, adapter);
+            }
+        });
+    }
+
+    private void cargarUsuariosDirectoDialogo(ProgressBar pbLoading, LinearLayout layoutVacio, RecyclerView rvUsuarios, UsuarioAdapter adapter) {
+        ApiClient.getApiService().getUsuariosDirectList().enqueue(new Callback<List<Usuario>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Usuario>> call, @NonNull Response<List<Usuario>> response) {
+                if (pbLoading != null) pbLoading.setVisibility(View.GONE);
+
+                List<Usuario> lista = new ArrayList<>();
+                if (response.isSuccessful() && response.body() != null) {
+                    lista = response.body();
+                }
+                mostrarUsuariosEnDialogo(lista, layoutVacio, rvUsuarios, adapter);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<Usuario>> call, @NonNull Throwable t) {
+                if (pbLoading != null) pbLoading.setVisibility(View.GONE);
+                mostrarUsuariosEnDialogo(new ArrayList<>(), layoutVacio, rvUsuarios, adapter);
+            }
+        });
+    }
+
+    private void mostrarUsuariosEnDialogo(List<Usuario> usuarios, LinearLayout layoutVacio, RecyclerView rvUsuarios, UsuarioAdapter adapter) {
+        if (usuarios.isEmpty()) {
+            if (rvUsuarios != null) rvUsuarios.setVisibility(View.GONE);
+            if (layoutVacio != null) layoutVacio.setVisibility(View.VISIBLE);
+        } else {
+            if (layoutVacio != null) layoutVacio.setVisibility(View.GONE);
+            if (rvUsuarios != null) {
+                rvUsuarios.setVisibility(View.VISIBLE);
+                adapter.setUsuarios(usuarios);
+            }
+        }
+    }
+
+    // Modal para CREAR o EDITAR usuario
+    private void mostrarDialogoFormularioUsuario(Usuario usuarioExistente, ProgressBar pbLoading, LinearLayout layoutVacio, RecyclerView rvUsuarios, UsuarioAdapter adapter) {
+        boolean esEdicion = usuarioExistente != null;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_nuevo_usuario, null);
+        builder.setView(dialogView);
+
+        AlertDialog dialogUser = builder.create();
+        if (dialogUser.getWindow() != null) {
+            dialogUser.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitle);
+        TextView tvSubtitle = dialogView.findViewById(R.id.tvDialogSubtitle);
+
+        TextInputLayout tilNombres = dialogView.findViewById(R.id.tilNombresUsuario);
+        TextInputLayout tilApellidos = dialogView.findViewById(R.id.tilApellidosUsuario);
+        TextInputLayout tilDni = dialogView.findViewById(R.id.tilDniUsuario);
+        TextInputLayout tilTelefono = dialogView.findViewById(R.id.tilTelefonoUsuario);
+        TextInputLayout tilCorreo = dialogView.findViewById(R.id.tilCorreoUsuario);
+        TextInputLayout tilUsername = dialogView.findViewById(R.id.tilUsuarioName);
+        TextInputLayout tilPassword = dialogView.findViewById(R.id.tilPasswordUsuario);
+
+        TextInputEditText etNombres = dialogView.findViewById(R.id.etNombresUsuario);
+        TextInputEditText etApellidos = dialogView.findViewById(R.id.etApellidosUsuario);
+        TextInputEditText etDni = dialogView.findViewById(R.id.etDniUsuario);
+        TextInputEditText etRuc = dialogView.findViewById(R.id.etRucUsuario);
+        TextInputEditText etTelefono = dialogView.findViewById(R.id.etTelefonoUsuario);
+        TextInputEditText etCorreo = dialogView.findViewById(R.id.etCorreoUsuario);
+        TextInputEditText etUsername = dialogView.findViewById(R.id.etUsername);
+        TextInputEditText etPassword = dialogView.findViewById(R.id.etPasswordUsuario);
+        Spinner spinnerRol = dialogView.findViewById(R.id.spinnerRolUsuario);
+        TextInputEditText etDireccion = dialogView.findViewById(R.id.etDireccionUsuario);
+
+        MaterialButton btnCancelar = dialogView.findViewById(R.id.btnCancelarNuevoUsuario);
+        MaterialButton btnGuardar = dialogView.findViewById(R.id.btnGuardarNuevoUsuario);
+
+        // Configurar opciones del Spinner Rol
+        String[] roles = {"Cliente", "Vendedor", "Admin", "Chofer"};
+        ArrayAdapter<String> adapterRol = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, roles);
+        adapterRol.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        if (spinnerRol != null) {
+            spinnerRol.setAdapter(adapterRol);
+        }
+
+        if (esEdicion) {
+            if (tvTitle != null) tvTitle.setText("Editar Usuario #" + usuarioExistente.getId());
+            if (tvSubtitle != null) tvSubtitle.setText("Modifica los datos del usuario en el sistema");
+            if (btnGuardar != null) btnGuardar.setText("Actualizar");
+
+            if (etNombres != null) etNombres.setText(usuarioExistente.getNombres());
+            if (etApellidos != null) etApellidos.setText(usuarioExistente.getApellidos());
+            if (etDni != null) etDni.setText(usuarioExistente.getDni());
+            if (etRuc != null) etRuc.setText(usuarioExistente.getRuc());
+            if (etTelefono != null) etTelefono.setText(usuarioExistente.getTelefono());
+            if (etCorreo != null) etCorreo.setText(usuarioExistente.getCorreo());
+            if (etUsername != null) etUsername.setText(usuarioExistente.getUsuario());
+            if (etDireccion != null) etDireccion.setText(usuarioExistente.getDireccion());
+
+            // En edición, la contraseña no es obligatoria
+            if (tilPassword != null) tilPassword.setVisibility(View.GONE);
+
+            // Seleccionar Rol actual
+            if (spinnerRol != null && usuarioExistente.getRol() != null) {
+                for (int i = 0; i < roles.length; i++) {
+                    if (roles[i].equalsIgnoreCase(usuarioExistente.getRol())) {
+                        spinnerRol.setSelection(i);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (btnCancelar != null) {
+            btnCancelar.setOnClickListener(v -> dialogUser.dismiss());
+        }
+
+        if (btnGuardar != null) {
+            btnGuardar.setOnClickListener(v -> {
+                if (tilNombres != null) tilNombres.setError(null);
+                if (tilApellidos != null) tilApellidos.setError(null);
+                if (tilDni != null) tilDni.setError(null);
+                if (tilTelefono != null) tilTelefono.setError(null);
+                if (tilCorreo != null) tilCorreo.setError(null);
+                if (tilUsername != null) tilUsername.setError(null);
+                if (tilPassword != null) tilPassword.setError(null);
+
+                String nombres = etNombres != null && etNombres.getText() != null ? etNombres.getText().toString().trim() : "";
+                String apellidos = etApellidos != null && etApellidos.getText() != null ? etApellidos.getText().toString().trim() : "";
+                String dni = etDni != null && etDni.getText() != null ? etDni.getText().toString().trim() : "";
+                String ruc = etRuc != null && etRuc.getText() != null ? etRuc.getText().toString().trim() : "";
+                String telefono = etTelefono != null && etTelefono.getText() != null ? etTelefono.getText().toString().trim() : "";
+                String correo = etCorreo != null && etCorreo.getText() != null ? etCorreo.getText().toString().trim() : "";
+                String username = etUsername != null && etUsername.getText() != null ? etUsername.getText().toString().trim() : "";
+                String password = etPassword != null && etPassword.getText() != null ? etPassword.getText().toString().trim() : "";
+                String rolSeleccionado = spinnerRol != null && spinnerRol.getSelectedItem() != null ? spinnerRol.getSelectedItem().toString().toLowerCase() : "cliente";
+                String direccion = etDireccion != null && etDireccion.getText() != null ? etDireccion.getText().toString().trim() : "";
+
+                boolean esValido = true;
+
+                if (TextUtils.isEmpty(nombres)) {
+                    if (tilNombres != null) tilNombres.setError("Ingresa los nombres");
+                    esValido = false;
+                }
+
+                if (TextUtils.isEmpty(apellidos)) {
+                    if (tilApellidos != null) tilApellidos.setError("Ingresa los apellidos");
+                    esValido = false;
+                }
+
+                if (TextUtils.isEmpty(dni) || dni.length() != 8) {
+                    if (tilDni != null) tilDni.setError("El DNI debe tener 8 dígitos numéricos");
+                    esValido = false;
+                }
+
+                if (TextUtils.isEmpty(telefono) || telefono.length() < 7) {
+                    if (tilTelefono != null) tilTelefono.setError("Ingresa un número de teléfono válido");
+                    esValido = false;
+                }
+
+                if (TextUtils.isEmpty(correo) || !correo.contains("@")) {
+                    if (tilCorreo != null) tilCorreo.setError("Ingresa un correo electrónico válido");
+                    esValido = false;
+                }
+
+                if (TextUtils.isEmpty(username) || username.length() < 3) {
+                    if (tilUsername != null) tilUsername.setError("El usuario debe tener al menos 3 caracteres");
+                    esValido = false;
+                }
+
+                if (!esEdicion && (TextUtils.isEmpty(password) || password.length() < 8)) {
+                    if (tilPassword != null) tilPassword.setError("La contraseña debe tener al menos 8 caracteres");
+                    esValido = false;
+                }
+
+                if (esValido) {
+                    Usuario usuarioRequest = esEdicion ? usuarioExistente : new Usuario();
+                    usuarioRequest.setNombres(nombres);
+                    usuarioRequest.setApellidos(apellidos);
+                    usuarioRequest.setDni(dni);
+                    usuarioRequest.setRuc(ruc);
+                    usuarioRequest.setTelefono(telefono);
+                    usuarioRequest.setCorreo(correo);
+                    usuarioRequest.setUsuario(username);
+                    if (!esEdicion) {
+                        usuarioRequest.setPassword(password);
+                    }
+                    usuarioRequest.setRol(rolSeleccionado);
+                    usuarioRequest.setDireccion(direccion);
+
+                    if (esEdicion) {
+                        ejecutarEditarUsuario(usuarioExistente.getId(), usuarioRequest, dialogUser, btnGuardar, pbLoading, layoutVacio, rvUsuarios, adapter);
+                    } else {
+                        ejecutarCrearUsuario(usuarioRequest, dialogUser, btnGuardar, pbLoading, layoutVacio, rvUsuarios, adapter);
+                    }
+                }
+            });
+        }
+
+        dialogUser.show();
+    }
+
+    private void ejecutarCrearUsuario(Usuario usuario, AlertDialog dialogUser, MaterialButton btnGuardar,
+                                     ProgressBar pbLoading, LinearLayout layoutVacio, RecyclerView rvUsuarios, UsuarioAdapter adapter) {
+        if (btnGuardar != null) btnGuardar.setEnabled(false);
+
+        ApiClient.getApiService().crearUsuario(usuario).enqueue(new Callback<UsuarioResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<UsuarioResponse> call, @NonNull Response<UsuarioResponse> response) {
+                if (btnGuardar != null) btnGuardar.setEnabled(true);
+
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    Toast.makeText(DashboardActivity.this, "¡Usuario registrado correctamente en MySQL!", Toast.LENGTH_SHORT).show();
+                    if (dialogUser != null && dialogUser.isShowing()) dialogUser.dismiss();
+
+                    // Recargar usuarios en el historial si están activos
+                    if (rvUsuarios != null && adapter != null) {
+                        cargarUsuariosEnDialogo("", pbLoading, layoutVacio, rvUsuarios, adapter);
+                    }
+                    obtenerDatosDashboard();
+                } else {
+                    String msg = "Error al registrar usuario";
+                    if (response.body() != null && response.body().getMessage() != null) {
+                        msg = response.body().getMessage();
+                    }
+                    Toast.makeText(DashboardActivity.this, msg, Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<UsuarioResponse> call, @NonNull Throwable t) {
+                if (btnGuardar != null) btnGuardar.setEnabled(true);
+                Toast.makeText(DashboardActivity.this, "Error de conexión al registrar usuario", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void ejecutarEditarUsuario(int id, Usuario usuario, AlertDialog dialogUser, MaterialButton btnGuardar,
+                                      ProgressBar pbLoading, LinearLayout layoutVacio, RecyclerView rvUsuarios, UsuarioAdapter adapter) {
+        if (btnGuardar != null) btnGuardar.setEnabled(false);
+
+        ApiClient.getApiService().editarUsuario(id, usuario).enqueue(new Callback<UsuarioResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<UsuarioResponse> call, @NonNull Response<UsuarioResponse> response) {
+                if (btnGuardar != null) btnGuardar.setEnabled(true);
+
+                if (response.isSuccessful()) {
+                    Toast.makeText(DashboardActivity.this, "¡Usuario actualizado correctamente!", Toast.LENGTH_SHORT).show();
+                    if (dialogUser != null && dialogUser.isShowing()) dialogUser.dismiss();
+
+                    if (rvUsuarios != null && adapter != null) {
+                        cargarUsuariosEnDialogo("", pbLoading, layoutVacio, rvUsuarios, adapter);
+                    }
+                    obtenerDatosDashboard();
+                } else {
+                    Toast.makeText(DashboardActivity.this, "Error al actualizar usuario (" + response.code() + ")", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<UsuarioResponse> call, @NonNull Throwable t) {
+                if (btnGuardar != null) btnGuardar.setEnabled(true);
+                Toast.makeText(DashboardActivity.this, "Error de conexión al actualizar usuario", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    // Modal para resetear contraseña
+    private void mostrarDialogoResetPasswordUsuario(Usuario usuario) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_reset_password, null);
+        builder.setView(dialogView);
+
+        AlertDialog dialogReset = builder.create();
+        if (dialogReset.getWindow() != null) {
+            dialogReset.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        TextInputLayout tilPassword = dialogView.findViewById(R.id.tilNuevaPassword);
+        TextInputEditText etPassword = dialogView.findViewById(R.id.etNuevaPassword);
+        MaterialButton btnCancelar = dialogView.findViewById(R.id.btnCancelarReset);
+        MaterialButton btnGuardar = dialogView.findViewById(R.id.btnGuardarReset);
+
+        if (btnCancelar != null) {
+            btnCancelar.setOnClickListener(v -> dialogReset.dismiss());
+        }
+
+        if (btnGuardar != null) {
+            btnGuardar.setOnClickListener(v -> {
+                if (tilPassword != null) tilPassword.setError(null);
+
+                String nuevaPass = etPassword != null && etPassword.getText() != null ? etPassword.getText().toString().trim() : "";
+
+                if (TextUtils.isEmpty(nuevaPass) || nuevaPass.length() < 8) {
+                    if (tilPassword != null) tilPassword.setError("La contraseña debe tener al menos 8 caracteres");
+                    return;
+                }
+
+                ejecutarResetPassword(usuario.getId(), nuevaPass, dialogReset, btnGuardar);
+            });
+        }
+
+        dialogReset.show();
+    }
+
+    private void ejecutarResetPassword(int id, String nuevaPassword, AlertDialog dialogReset, MaterialButton btnGuardar) {
+        if (btnGuardar != null) btnGuardar.setEnabled(false);
+
+        ResetPasswordRequest request = new ResetPasswordRequest(nuevaPassword);
+
+        ApiClient.getApiService().resetPasswordUsuario(id, request).enqueue(new Callback<UsuarioResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<UsuarioResponse> call, @NonNull Response<UsuarioResponse> response) {
+                if (btnGuardar != null) btnGuardar.setEnabled(true);
+
+                if (response.isSuccessful()) {
+                    Toast.makeText(DashboardActivity.this, "¡Contraseña restablecida correctamente!", Toast.LENGTH_SHORT).show();
+                    if (dialogReset != null && dialogReset.isShowing()) dialogReset.dismiss();
+                } else {
+                    Toast.makeText(DashboardActivity.this, "Error al restablecer contraseña (" + response.code() + ")", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<UsuarioResponse> call, @NonNull Throwable t) {
+                if (btnGuardar != null) btnGuardar.setEnabled(true);
+                Toast.makeText(DashboardActivity.this, "Error de conexión al restablecer contraseña", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    // Modal para confirmar eliminación de usuario
+    private void mostrarDialogoConfirmarEliminarUsuario(Usuario usuario, ProgressBar pbLoading, LinearLayout layoutVacio, RecyclerView rvUsuarios, UsuarioAdapter adapter) {
+        new AlertDialog.Builder(this)
+                .setTitle("Eliminar Usuario")
+                .setMessage("¿Estás seguro de eliminar al usuario \"" + usuario.getNombreCompleto() + "\"?")
+                .setPositiveButton("Eliminar", (dialog, which) -> ejecutarEliminarUsuario(usuario.getId(), pbLoading, layoutVacio, rvUsuarios, adapter))
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void ejecutarEliminarUsuario(int id, ProgressBar pbLoading, LinearLayout layoutVacio, RecyclerView rvUsuarios, UsuarioAdapter adapter) {
+        ApiClient.getApiService().eliminarUsuario(id).enqueue(new Callback<UsuarioResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<UsuarioResponse> call, @NonNull Response<UsuarioResponse> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(DashboardActivity.this, "¡Usuario eliminado correctamente!", Toast.LENGTH_SHORT).show();
+                    if (rvUsuarios != null && adapter != null) {
+                        cargarUsuariosEnDialogo("", pbLoading, layoutVacio, rvUsuarios, adapter);
+                    }
+                    obtenerDatosDashboard();
+                } else {
+                    Toast.makeText(DashboardActivity.this, "Error al eliminar usuario (" + response.code() + ")", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<UsuarioResponse> call, @NonNull Throwable t) {
+                Toast.makeText(DashboardActivity.this, "Error de conexión al eliminar usuario", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // =======================================================
+    // HISTORIAL Y REGISTRO DE PROVEEDORES DESDE DASHBOARD
+    // =======================================================
+
+    private void mostrarDialogoListaProveedores() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_lista_proveedores, null);
+        builder.setView(dialogView);
+
+        AlertDialog dialogLista = builder.create();
+        if (dialogLista.getWindow() != null) {
+            dialogLista.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        ProgressBar pbLoading = dialogView.findViewById(R.id.pbLoadingProveedores);
+        LinearLayout layoutVacio = dialogView.findViewById(R.id.layoutProveedoresVacio);
+        RecyclerView rvProveedores = dialogView.findViewById(R.id.rvProveedores);
+        MaterialButton btnNuevo = dialogView.findViewById(R.id.btnNuevoProveedorDialog);
+        MaterialButton btnCerrar = dialogView.findViewById(R.id.btnCerrarListaProveedores);
+
+        if (rvProveedores != null) {
+            rvProveedores.setLayoutManager(new LinearLayoutManager(this));
+        }
+
+        ProveedorAdapter adapter = new ProveedorAdapter(this, new ArrayList<>());
+        if (rvProveedores != null) {
+            rvProveedores.setAdapter(adapter);
+        }
+
+        if (btnCerrar != null) {
+            btnCerrar.setOnClickListener(v -> dialogLista.dismiss());
+        }
+
+        if (btnNuevo != null) {
+            btnNuevo.setOnClickListener(v -> mostrarDialogoNuevoProveedor(pbLoading, layoutVacio, rvProveedores, adapter));
+        }
+
+        // Cargar proveedores desde MySQL
+        cargarProveedoresEnDialogo(pbLoading, layoutVacio, rvProveedores, adapter);
+
+        dialogLista.show();
+    }
+
+    private void cargarProveedoresEnDialogo(ProgressBar pbLoading, LinearLayout layoutVacio, RecyclerView rvProveedores, ProveedorAdapter adapter) {
+        if (pbLoading != null) pbLoading.setVisibility(View.VISIBLE);
+        if (rvProveedores != null) rvProveedores.setVisibility(View.GONE);
+        if (layoutVacio != null) layoutVacio.setVisibility(View.GONE);
+
+        ApiClient.getApiService().getProveedores().enqueue(new Callback<ProveedorResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ProveedorResponse> call, @NonNull Response<ProveedorResponse> response) {
+                if (pbLoading != null) pbLoading.setVisibility(View.GONE);
+
+                List<Proveedor> lista = new ArrayList<>();
+                if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                    lista = response.body().getData();
+                }
+
+                if (lista.isEmpty()) {
+                    cargarProveedoresDirectoDialogo(pbLoading, layoutVacio, rvProveedores, adapter);
+                } else {
+                    mostrarProveedoresEnDialogo(lista, layoutVacio, rvProveedores, adapter);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ProveedorResponse> call, @NonNull Throwable t) {
+                cargarProveedoresDirectoDialogo(pbLoading, layoutVacio, rvProveedores, adapter);
+            }
+        });
+    }
+
+    private void cargarProveedoresDirectoDialogo(ProgressBar pbLoading, LinearLayout layoutVacio, RecyclerView rvProveedores, ProveedorAdapter adapter) {
+        ApiClient.getApiService().getProveedoresDirectList().enqueue(new Callback<List<Proveedor>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Proveedor>> call, @NonNull Response<List<Proveedor>> response) {
+                if (pbLoading != null) pbLoading.setVisibility(View.GONE);
+
+                List<Proveedor> lista = new ArrayList<>();
+                if (response.isSuccessful() && response.body() != null) {
+                    lista = response.body();
+                }
+                mostrarProveedoresEnDialogo(lista, layoutVacio, rvProveedores, adapter);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<Proveedor>> call, @NonNull Throwable t) {
+                if (pbLoading != null) pbLoading.setVisibility(View.GONE);
+                mostrarProveedoresEnDialogo(new ArrayList<>(), layoutVacio, rvProveedores, adapter);
+            }
+        });
+    }
+
+    private void mostrarProveedoresEnDialogo(List<Proveedor> proveedores, LinearLayout layoutVacio, RecyclerView rvProveedores, ProveedorAdapter adapter) {
+        if (proveedores.isEmpty()) {
+            if (rvProveedores != null) rvProveedores.setVisibility(View.GONE);
+            if (layoutVacio != null) layoutVacio.setVisibility(View.VISIBLE);
+        } else {
+            if (layoutVacio != null) layoutVacio.setVisibility(View.GONE);
+            if (rvProveedores != null) {
+                rvProveedores.setVisibility(View.VISIBLE);
+                adapter.setProveedores(proveedores);
+            }
+        }
+    }
+
+    // Modal para registrar nuevo proveedor
+    private void mostrarDialogoNuevoProveedor(ProgressBar pbLoading, LinearLayout layoutVacio, RecyclerView rvProveedores, ProveedorAdapter adapter) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_nuevo_proveedor, null);
+        builder.setView(dialogView);
+
+        AlertDialog dialogProv = builder.create();
+        if (dialogProv.getWindow() != null) {
+            dialogProv.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        TextInputLayout tilNombre = dialogView.findViewById(R.id.tilNombreEmpresa);
+        TextInputLayout tilRuc = dialogView.findViewById(R.id.tilRucProveedor);
+        TextInputLayout tilTelefono = dialogView.findViewById(R.id.tilTelefonoProveedor);
+        TextInputLayout tilCorreo = dialogView.findViewById(R.id.tilCorreoProveedor);
+
+        TextInputEditText etNombre = dialogView.findViewById(R.id.etNombreEmpresa);
+        TextInputEditText etRuc = dialogView.findViewById(R.id.etRucProveedor);
+        TextInputEditText etTelefono = dialogView.findViewById(R.id.etTelefonoProveedor);
+        TextInputEditText etCorreo = dialogView.findViewById(R.id.etCorreoProveedor);
+        TextInputEditText etDireccion = dialogView.findViewById(R.id.etDireccionProveedor);
+
+        MaterialButton btnCancelar = dialogView.findViewById(R.id.btnCancelarProveedor);
+        MaterialButton btnGuardar = dialogView.findViewById(R.id.btnGuardarProveedor);
+
+        if (btnCancelar != null) {
+            btnCancelar.setOnClickListener(v -> dialogProv.dismiss());
+        }
+
+        if (btnGuardar != null) {
+            btnGuardar.setOnClickListener(v -> {
+                if (tilNombre != null) tilNombre.setError(null);
+                if (tilRuc != null) tilRuc.setError(null);
+                if (tilTelefono != null) tilTelefono.setError(null);
+                if (tilCorreo != null) tilCorreo.setError(null);
+
+                String nombreEmpresa = etNombre != null && etNombre.getText() != null ? etNombre.getText().toString().trim() : "";
+                String ruc = etRuc != null && etRuc.getText() != null ? etRuc.getText().toString().trim() : "";
+                String telefono = etTelefono != null && etTelefono.getText() != null ? etTelefono.getText().toString().trim() : "";
+                String correo = etCorreo != null && etCorreo.getText() != null ? etCorreo.getText().toString().trim() : "";
+                String direccion = etDireccion != null && etDireccion.getText() != null ? etDireccion.getText().toString().trim() : "";
+
+                boolean esValido = true;
+
+                if (TextUtils.isEmpty(nombreEmpresa)) {
+                    if (tilNombre != null) tilNombre.setError("Ingresa el nombre de la empresa");
+                    esValido = false;
+                }
+
+                if (TextUtils.isEmpty(ruc) || ruc.length() != 11) {
+                    if (tilRuc != null) tilRuc.setError("El RUC debe tener 11 dígitos numéricos");
+                    esValido = false;
+                }
+
+                if (TextUtils.isEmpty(telefono) || telefono.length() < 7) {
+                    if (tilTelefono != null) tilTelefono.setError("Ingresa un número de teléfono válido");
+                    esValido = false;
+                }
+
+                if (TextUtils.isEmpty(correo) || !correo.contains("@")) {
+                    if (tilCorreo != null) tilCorreo.setError("Ingresa un correo electrónico válido");
+                    esValido = false;
+                }
+
+                if (esValido) {
+                    Proveedor nuevoProveedor = new Proveedor();
+                    nuevoProveedor.setNombreEmpresa(nombreEmpresa);
+                    nuevoProveedor.setRuc(ruc);
+                    nuevoProveedor.setTelefono(telefono);
+                    nuevoProveedor.setCorreo(correo);
+                    nuevoProveedor.setDireccion(direccion);
+
+                    ejecutarCrearProveedor(nuevoProveedor, dialogProv, btnGuardar, pbLoading, layoutVacio, rvProveedores, adapter);
+                }
+            });
+        }
+
+        dialogProv.show();
+    }
+
+    private void ejecutarCrearProveedor(Proveedor proveedor, AlertDialog dialogProv, MaterialButton btnGuardar,
+                                       ProgressBar pbLoading, LinearLayout layoutVacio, RecyclerView rvProveedores, ProveedorAdapter adapter) {
+        if (btnGuardar != null) btnGuardar.setEnabled(false);
+
+        ApiClient.getApiService().crearProveedor(proveedor).enqueue(new Callback<ProveedorResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ProveedorResponse> call, @NonNull Response<ProveedorResponse> response) {
+                if (btnGuardar != null) btnGuardar.setEnabled(true);
+
+                if (response.isSuccessful()) {
+                    Toast.makeText(DashboardActivity.this, "¡Proveedor registrado correctamente en MySQL!", Toast.LENGTH_SHORT).show();
+                    if (dialogProv != null && dialogProv.isShowing()) dialogProv.dismiss();
+
+                    // Recargar proveedores en el historial
+                    cargarProveedoresEnDialogo(pbLoading, layoutVacio, rvProveedores, adapter);
+                    obtenerDatosDashboard();
+                } else {
+                    String msg = "Error al registrar proveedor (" + response.code() + ")";
+                    if (response.errorBody() != null) {
+                        try {
+                            String errStr = response.errorBody().string();
+                            ProveedorResponse errRes = new Gson().fromJson(errStr, ProveedorResponse.class);
+                            if (errRes != null && errRes.getMessage() != null) {
+                                msg = errRes.getMessage();
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    }
+                    Toast.makeText(DashboardActivity.this, msg, Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ProveedorResponse> call, @NonNull Throwable t) {
+                if (btnGuardar != null) btnGuardar.setEnabled(true);
+                Toast.makeText(DashboardActivity.this, "Error de conexión al registrar proveedor", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 }
